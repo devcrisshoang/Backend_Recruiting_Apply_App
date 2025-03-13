@@ -3,11 +3,11 @@ using Backend_Recruiting_Apply_App.DTO;
 
 namespace Backend_Recruiting_Apply_App.Mapper
 {
-    public static class WorkMapper
+    public static class ApplyMapper
     {
-        public static WorkDto MapToDto(Company company, Job job)
+        public static ApplyDto MapToDto(Company company, Job job)
         {
-            return new WorkDto
+            return new ApplyDto
             {
                 ID = job.ID,
                 Name = job.Name,

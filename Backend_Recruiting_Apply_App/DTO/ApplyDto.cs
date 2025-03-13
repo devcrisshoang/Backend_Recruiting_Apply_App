@@ -1,9 +1,6 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using System.Text.Json.Serialization;
-
-namespace Backend_Recruiting_Apply_App.DTO
+﻿namespace Backend_Recruiting_Apply_App.DTO
 {
-    public class WorkDto
+    public class ApplyDto
     {
         public int ID { get; set; }
         public string Name { get; set; } = "";

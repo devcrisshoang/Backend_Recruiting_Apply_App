@@ -8,17 +8,17 @@ namespace Backend_Recruiting_Apply_App.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class WorkController : ControllerBase
+    public class ApplyViewController : ControllerBase
     {
         private readonly RAADbContext _context;
 
-        public WorkController(RAADbContext context)
+        public ApplyViewController(RAADbContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WorkDto>>> GetJob()
+        public async Task<ActionResult<IEnumerable<ApplyDto>>> GetJob()
         {
             var Job = await _context.Job.ToListAsync();
             var Company = await _context.Company.ToListAsync();
@@ -26,7 +26,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             var result = Job.Join(Company,
                 job => job.Recruiter_ID,
                 company => company.ID,
-                (job, company) => new WorkDto
+                (job, company) => new ApplyDto
                 {
                     ID = job.ID,
                     Name = job.Name,
@@ -51,7 +51,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<WorkDto>> GetJob(int id)
+        public async Task<ActionResult<ApplyDto>> GetJob(int id)
         {
             var job = await _context.Job.FindAsync(id);
             if (job == null)
@@ -61,7 +61,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             if (company == null)
                 return NotFound();
 
-            var workDto = new WorkDto
+            var workDto = new ApplyDto
             {
                 ID = job.ID,
                 Name = job.Name,
@@ -86,7 +86,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<WorkDto>> CreateJob(WorkDto workDto)
+        public async Task<ActionResult<ApplyDto>> CreateJob(ApplyDto workDto)
         {
             var job = new Job
             {
@@ -113,7 +113,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateJob(int id, WorkDto workDto)
+        public async Task<IActionResult> UpdateJob(int id, ApplyDto workDto)
         {
             var job = await _context.Job.FindAsync(id);
             if (job == null)
