@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("ApplicantJobs")]
-    public class ApplicantJob
+    [Table("Apply")]
+    public class Apply
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

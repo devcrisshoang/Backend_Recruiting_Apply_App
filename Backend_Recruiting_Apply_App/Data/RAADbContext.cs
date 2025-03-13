@@ -16,7 +16,7 @@ namespace TopCVSystemAPIdotnet.Data
         public DbSet<Company> Company { get; set; }
         public DbSet<Notification> Notification { get; set; }
         public DbSet<Recruiter> Recruiter { get; set; }
-        public DbSet<ApplicantJob> ApplicantJob { get; set; }
+        public DbSet<Apply> ApplicantJob { get; set; }
         public DbSet<Admin> Admin { get; set; }
     }
 }
