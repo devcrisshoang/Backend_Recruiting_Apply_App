@@ -13,7 +13,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public string Phone { get; set; } = string.Empty;
         public string Field { get; set; } = string.Empty;
         public byte[] Image { get; set; } = [];
-        public bool Badge { get; set; } = false;
+        public int Badge { get; set; } = 0;
         public string Website { get; set; } = string.Empty;
         public int Tax { get; set; } = 0;
         public DateTime Founded_Time { get; set; } = DateTime.Now;

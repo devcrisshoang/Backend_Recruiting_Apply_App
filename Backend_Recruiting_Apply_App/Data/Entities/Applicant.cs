@@ -14,7 +14,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public string Job { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public string Experience { get; set; } = string.Empty;
-        public bool Is_Premium { get; set; } = false;
+        public int Is_Premium { get; set; } = 0;
         public int User_ID { get; set; } = 0;
         
     }

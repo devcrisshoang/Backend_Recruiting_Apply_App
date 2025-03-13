@@ -12,7 +12,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public string Password { get; set; } = string.Empty;
         public string Background { get; set; } = string.Empty;
         public byte[] Image { get; set; } = [];
-        public bool Is_Applicant { get; set; } = false;
-        public bool Is_Recruiter { get; set; } = false;
+        public int Is_Applicant { get; set; } = 0;
+        public int Is_Recruiter { get; set; } = 0;
     }
 }
