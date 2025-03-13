@@ -7,11 +7,11 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        public int sender_id { get; set; } = 0;
-        public int receiver_id { get; set; } = 0;
-        public string content { get; set; } = string.Empty;
-        public bool status { get; set; } = false;
-        public DateTime time { get; set; } = DateTime.Now;
+        public int ID { get; set; }
+        public int Sender_ID { get; set; } = 0;
+        public int Receiver_ID { get; set; } = 0;
+        public string Content { get; set; } = string.Empty;
+        public bool Status { get; set; } = false;
+        public DateTime Time { get; set; } = DateTime.Now;
     }
 }

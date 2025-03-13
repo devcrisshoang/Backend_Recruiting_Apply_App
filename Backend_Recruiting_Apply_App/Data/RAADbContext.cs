@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TopCVSystemAPIdotnet.Data
 {
-    public class RRADbContext : DbContext
+    public class RAADbContext : DbContext
     {
-        public RRADbContext(DbContextOptions<RRADbContext> options) : base(options) { }
+        public RAADbContext(DbContextOptions<RAADbContext> options) : base(options) { }
         public DbSet<User> User { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Message> Message { get; set; }

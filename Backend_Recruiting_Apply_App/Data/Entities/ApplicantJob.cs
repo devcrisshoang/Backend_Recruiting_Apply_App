@@ -7,12 +7,12 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        public bool is_accepted { get; set; } = false;
-        public bool is_rejected { get; set; } = false;
-        public DateTime time { get; set; } = DateTime.Now;
-        public int job_id { get; set; } = 0;
-        public int applicant_id { get; set; } = 0;
-        public int resume_id { get; set; } = 0;
+        public int ID { get; set; }
+        public bool Is_Accepted { get; set; } = false;
+        public bool Is_Rejected { get; set; } = false;
+        public DateTime Time { get; set; } = DateTime.Now;
+        public int Job_ID { get; set; } = 0;
+        public int Applicant_ID { get; set; } = 0;
+        public int Resume_ID { get; set; } = 0;
     }
 }

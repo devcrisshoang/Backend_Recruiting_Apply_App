@@ -7,15 +7,15 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        public string name { get; set; } = string.Empty;
-        public string address { get; set; } = string.Empty;
-        public string phone_number { get; set; } = string.Empty;
-        public string field { get; set; } = string.Empty;
-        public byte[] image { get; set; } = new byte[0];
-        public bool green_badge { get; set; } = false;
-        public string website_link { get; set; } = string.Empty;
-        public int tax_id { get; set; } = 0;
-        public DateTime date_founded { get; set; } = DateTime.Now;
+        public int ID { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Field { get; set; } = string.Empty;
+        public byte[] Image { get; set; } = [];
+        public bool Badge { get; set; } = false;
+        public string Website { get; set; } = string.Empty;
+        public int Tax { get; set; } = 0;
+        public DateTime Founded_Time { get; set; } = DateTime.Now;
     }
 }

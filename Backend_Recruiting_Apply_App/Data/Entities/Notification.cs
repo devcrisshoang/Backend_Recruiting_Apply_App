@@ -7,8 +7,8 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        public string content { get; set; } = string.Empty;
-        public int user_id { get; set; } = 0;
+        public int ID { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public int User_ID { get; set; } = 0;
     }
 }

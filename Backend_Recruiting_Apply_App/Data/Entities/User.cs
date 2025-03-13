@@ -7,12 +7,12 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        public string username { get; set; } = string.Empty;
-        public string password { get; set; } = string.Empty;
-        public string background { get; set; } = string.Empty;
-        public byte[] image { get; set; } = new byte[0];
-        public bool is_applicant { get; set; } = false;
-        public bool is_recruiter { get; set; } = false;
+        public int ID { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Background { get; set; } = string.Empty;
+        public byte[] Image { get; set; } = [];
+        public bool Is_Applicant { get; set; } = false;
+        public bool Is_Recruiter { get; set; } = false;
     }
 }
