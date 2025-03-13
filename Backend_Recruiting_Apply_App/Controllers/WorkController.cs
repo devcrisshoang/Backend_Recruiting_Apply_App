@@ -68,7 +68,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Experience = job.Experience,
                 Address = job.Address,
                 Description = job.Description,
-                Skill = job.Skills,
+                Skill = job.Skill,
                 Benefit = job.Benefit,
                 Gender = job.Gender,
                 Time = job.Time,
@@ -94,7 +94,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Experience = workDto.Experience,
                 Address = workDto.Address,
                 Description = workDto.Description,
-                Skills = workDto.Skill,
+                Skill = workDto.Skill,
                 Benefit = workDto.Benefit,
                 Gender = workDto.Gender,
                 Time = workDto.Time,
@@ -123,7 +123,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             job.Experience = workDto.Experience;
             job.Address = workDto.Address;
             job.Description = workDto.Description;
-            job.Skills = workDto.Skill;
+            job.Skill = workDto.Skill;
             job.Benefit = workDto.Benefit;
             job.Gender = workDto.Gender;
             job.Time = workDto.Time;

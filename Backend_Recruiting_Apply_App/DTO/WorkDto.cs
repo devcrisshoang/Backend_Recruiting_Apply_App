@@ -21,6 +21,6 @@ namespace Backend_Recruiting_Apply_App.DTO
         public int Status { get; set; } = 0;
         public int Recruiter_ID { get; set; } = 0;
         public byte[] Image { get; set; } = [];
-        public bool Badge { get; set; } = false;
+        public int Badge { get; set; } = 0;
     }
 }

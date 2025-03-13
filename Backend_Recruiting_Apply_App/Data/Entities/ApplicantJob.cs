@@ -3,16 +3,24 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
+    [Table("ApplicantJobs")]
     public class ApplicantJob
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("ID")]
         public int ID { get; set; }
-        public bool Is_Accepted { get; set; } = false;
-        public bool Is_Rejected { get; set; } = false;
+        [Column("Is_Accepted")]
+        public int Is_Accepted { get; set; } = 0;
+        [Column("Is_Rejected")]
+        public int Is_Rejected { get; set; } = 0;
+        [Column("Time")]
         public DateTime Time { get; set; } = DateTime.Now;
+        [Column("Job_ID")]
         public int Job_ID { get; set; } = 0;
+        [Column("Applicant_ID")]
         public int Applicant_ID { get; set; } = 0;
+        [Column("Resume_ID")]
         public int Resume_ID { get; set; } = 0;
     }
 }
