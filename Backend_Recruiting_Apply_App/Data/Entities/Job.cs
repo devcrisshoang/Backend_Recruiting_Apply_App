@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("Jobs")]
+    [Table("_Job")]
     public class Job
     {
         [Key]

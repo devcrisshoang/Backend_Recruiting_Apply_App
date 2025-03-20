@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("Admins")]
+    [Table("_Admin")]
     public class Admin
     {
         [Key]

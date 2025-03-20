@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("_Article")]
-    public class Article
+    [Table("_Category")]
+    public class Category
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -12,13 +12,12 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public int ID { get; set; }
         [Column("Name")]
         public string Name { get; set; } = string.Empty;
-        [Column("Content")]
-        public string Content { get; set; } = string.Empty;
-        [Column("Time")]
-        public string Time { get; set; } = string.Empty;
-        [Column("Image")]
-        public byte[] Image { get; set; } = [];
-        [Column("Recruiter_ID")]
-        public int Recruiter_ID { get; set; } = 0;
+        [Column("Description")]
+        public string Description { get; set; } = string.Empty;
+        [Column("Resume_ID")]
+        public int Resume_ID { get; set; } = 0;
+        [Column("Side")]
+        public int Side { get; set; } = 0;
+        
     }
 }

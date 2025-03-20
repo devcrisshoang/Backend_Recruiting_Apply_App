@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("Users")]
+    [Table("_User")]
     public class User
     {
         [Key]
@@ -22,9 +22,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public string Password { get; set; } = string.Empty;
         [Column("Image")]
         public byte[] Image { get; set; } = [];
-        [Column("Is_Applicant")]
-        public int Is_Applicant { get; set; } = 0;
-        [Column("Is_Recruiter")]
-        public int Is_Recruiter { get; set; } = 0;
+        [Column("Type")]
+        public int Type { get; set; } = 0;
     }
 }
