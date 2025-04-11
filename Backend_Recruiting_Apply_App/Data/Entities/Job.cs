@@ -34,6 +34,8 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public int Position { get; set; } = 0;
         [Column("Salary")]
         public int Salary { get; set; } = 0;
+        [Column("Quantity")]
+        public int Quantity { get; set; } = 0;
         [Column("Create_Time")]
         public DateTime Create_Time { get; set; } = DateTime.Now;
         [Column("Status")]

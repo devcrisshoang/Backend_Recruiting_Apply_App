@@ -11,7 +11,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         [Column("ID")]
         public int ID { get; set; }
         [Column("Name")]
-        public string Introduction { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         [Column("Image")]
         public byte[] Image { get; set; } = [];
         [Column("Create_Time")]

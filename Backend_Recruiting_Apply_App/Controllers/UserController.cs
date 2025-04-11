@@ -1,5 +1,7 @@
 ﻿using Backend_Recruiting_Apply_App.Data;
+using Backend_Recruiting_Apply_App.Data.DTOs;
 using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Data.Mappers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TopCVSystemAPIdotnet.Data;
@@ -21,6 +23,19 @@ namespace Backend_Recruiting_Apply_App.Controllers
         public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
             return await _context.User.ToListAsync();
+        }
+
+        [HttpGet("non-auth{id}")]
+        public async Task<ActionResult<UserDTO>> GetNonAuthUser(int id)
+        {
+            var user = await _context.User.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            return Ok(UserMapper.ToDTO(user));
         }
 
         [HttpGet("{id}")]
@@ -73,6 +88,67 @@ namespace Backend_Recruiting_Apply_App.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("{id}/name")]
+        public async Task<IActionResult> UpdateUserName(int id, [FromBody] string name)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.Name = name;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/email")]
+        public async Task<IActionResult> UpdateUserEmail(int id, [FromBody] string email)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.Email = email;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/phone")]
+        public async Task<IActionResult> UpdateUserPhone(int id, [FromBody] string phone)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.Phone = phone;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/image")]
+        public async Task<IActionResult> UpdateUserImage(int id, [FromBody] byte[] image)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.Image = image;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
