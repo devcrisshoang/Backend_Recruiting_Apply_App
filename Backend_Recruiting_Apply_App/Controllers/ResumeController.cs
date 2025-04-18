@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {

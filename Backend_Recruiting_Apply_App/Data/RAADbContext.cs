@@ -3,7 +3,7 @@ using Backend_Recruiting_Apply_App.DTO;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace TopCVSystemAPIdotnet.Data
+namespace SystemAPIdotnet.Data
 {
     public class RAADbContext : DbContext
     {
@@ -23,6 +23,8 @@ namespace TopCVSystemAPIdotnet.Data
         public DbSet<ApplyDto> JobDetails { get; set; }
         public DbSet<Field> Field { get; set; }
         public DbSet<JobName> JobName { get; set; }
+        public DbSet<Province> Province { get; set; }
+        public DbSet<Experience> Experience { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

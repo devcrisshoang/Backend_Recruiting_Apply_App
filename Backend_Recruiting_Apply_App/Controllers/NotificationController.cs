@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
 using Backend_Recruiting_Apply_App.Hubs;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 

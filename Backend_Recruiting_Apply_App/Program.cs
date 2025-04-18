@@ -1,6 +1,6 @@
 ﻿using Backend_Recruiting_Apply_App.Hubs;
 using Microsoft.EntityFrameworkCore;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

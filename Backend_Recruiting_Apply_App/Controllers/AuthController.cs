@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using BCrypt.Net;
 using System.Net.Mail;
 using System.Net;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {

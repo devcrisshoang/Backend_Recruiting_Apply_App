@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -31,6 +31,20 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return NotFound();
 
             return jobName;
+        }
+
+        [HttpGet("by-field/{fieldId}")]
+        public async Task<ActionResult<IEnumerable<string>>> GetJobNamesByFieldId(int fieldId)
+        {
+            var jobNames = await _context.JobName
+                .Where(j => j.Field_ID == fieldId)
+                .Select(j => j.Name)
+                .ToListAsync();
+
+            if (jobNames == null || !jobNames.Any())
+                return NotFound($"No job names found for Field_ID {fieldId}");
+
+            return Ok(jobNames);
         }
 
         [HttpPost]

@@ -1,11 +1,7 @@
-﻿using Backend_Recruiting_Apply_App.Data;
-using Backend_Recruiting_Apply_App.Data.Entities;
+﻿using Backend_Recruiting_Apply_App.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using TopCVSystemAPIdotnet.Data;
+using SystemAPIdotnet.Data;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
