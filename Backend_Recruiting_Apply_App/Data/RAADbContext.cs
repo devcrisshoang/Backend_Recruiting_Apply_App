@@ -21,6 +21,9 @@ namespace TopCVSystemAPIdotnet.Data
         public DbSet<Apply> ApplicantJob { get; set; }
         public DbSet<Admin> Admin { get; set; }
         public DbSet<ApplyDto> JobDetails { get; set; }
+        public DbSet<Field> Field { get; set; }
+        public DbSet<JobName> JobName { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ApplyDto>().HasNoKey().ToView("ApplyView");

@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
-    [Table("_Notification")]
-    public class Notification
+    [Table("_Field")]
+    public class Field
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -12,11 +12,5 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public int ID { get; set; }
         [Column("Name")]
         public string Name { get; set; } = string.Empty;
-        [Column("Content")]
-        public string Content { get; set; } = string.Empty;
-        [Column("User_ID")]
-        public int User_ID { get; set; } = 0;
-        [Column("Time")]
-        public DateTime Time { get; set; } = DateTime.UtcNow;
     }
 }

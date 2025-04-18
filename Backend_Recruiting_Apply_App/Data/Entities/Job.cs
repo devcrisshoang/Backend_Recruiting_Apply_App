@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 
 namespace Backend_Recruiting_Apply_App.Data.Entities
 {
@@ -37,7 +35,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         [Column("Quantity")]
         public int Quantity { get; set; } = 0;
         [Column("Create_Time")]
-        public DateTime Create_Time { get; set; } = DateTime.Now;
+        public DateTime Create_Time { get; set; } = DateTime.UtcNow;
         [Column("Status")]
         public int Status { get; set; } = 0;
         [Column("Recruiter_ID")]
