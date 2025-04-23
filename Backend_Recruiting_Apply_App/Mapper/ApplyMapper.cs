@@ -17,7 +17,6 @@ namespace Backend_Recruiting_Apply_App.Mapper
                 Skill = job.Skill,
                 Benefit = job.Benefit,
                 Gender = job.Gender,
-                Time = job.Time,
                 Method = job.Method,
                 Position = job.Position,
                 Salary = job.Salary,
@@ -25,7 +24,7 @@ namespace Backend_Recruiting_Apply_App.Mapper
                 Status = job.Status,
                 Recruiter_ID = job.Recruiter_ID,
                 Image = company.Image,
-                Badge = company.Badge
+                Badge = company.Badge,
             };
         }
     }

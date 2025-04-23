@@ -35,6 +35,19 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return recruiter;
         }
 
+        [HttpGet("check-recruiter/{userId}")]
+        public async Task<IActionResult> CheckRecruiter(int userId)
+        {
+            var recruiter = await _context.Recruiter.FirstOrDefaultAsync(r => r.User_ID == userId);
+
+            if (recruiter == null)
+            {
+                return NotFound(new { message = "Recruiter profile not found" });
+            }
+
+            return Ok(recruiter);
+        }
+
         [HttpPost]
         public async Task<ActionResult<Recruiter>> CreateRecruiter(Recruiter recruiter)
         {

@@ -24,8 +24,6 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public string Benefit { get; set; } = "";
         [Column("Gender")]
         public int Gender { get; set; } = 0;
-        [Column("Time")]
-        public string Time { get; set; } = string.Empty;
         [Column("Method")]
         public int Method { get; set; } = 0;
         [Column("Position")]

@@ -33,6 +33,19 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return article;
         }
 
+        [HttpGet("recruiter/{recruiterId}")]
+        public async Task<ActionResult<IEnumerable<Article>>> GetArticlesByRecruiterId(int recruiterId)
+        {
+            var articles = await _context.Article
+                .Where(a => a.Recruiter_ID == recruiterId)
+                .ToListAsync();
+
+            if (articles == null || !articles.Any())
+                return NotFound();
+
+            return articles;
+        }
+
         [HttpPost]
         public async Task<ActionResult<Article>> CreateArticle(Article article)
         {

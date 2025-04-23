@@ -32,6 +32,19 @@ namespace Backend_Recruiting_Apply_App.Controllers
 
             return job;
         }
+        [HttpGet("recruiter/{recruiterId}")]
+        public async Task<ActionResult<IEnumerable<Job>>> GetJobsByRecruiterId(int recruiterId)
+        {
+            var jobs = await _context.Job
+                .Where(j => j.Recruiter_ID == recruiterId)
+                .ToListAsync();
+
+            if (jobs == null || !jobs.Any())
+                return NotFound("No jobs found for the specified recruiter.");
+
+            return Ok(jobs);
+        }
+
 
         [HttpPost]
         public async Task<ActionResult<Job>> CreateJob(Job job)

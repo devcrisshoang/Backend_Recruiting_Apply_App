@@ -25,6 +25,7 @@ namespace SystemAPIdotnet.Data
         public DbSet<JobName> JobName { get; set; }
         public DbSet<Province> Province { get; set; }
         public DbSet<Experience> Experience { get; set; }
+        public DbSet<Payment> Payment { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

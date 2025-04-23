@@ -10,12 +10,6 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("ID")]
         public int ID { get; set; }
-        [Column("Name")]
-        public string Name { get; set; } = string.Empty;
-        [Column("Phone")]
-        public string Phone { get; set; } = string.Empty;
-        [Column("Email")]
-        public string Email { get; set; } = string.Empty;
         [Column("Front_Image")]
         public byte[] Front_Image { get; set; } = [];
         [Column("Back_Image")]

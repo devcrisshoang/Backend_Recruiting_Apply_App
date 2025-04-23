@@ -36,7 +36,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
                     Skill = job.Skill,
                     Benefit = job.Benefit,
                     Gender = job.Gender,
-                    Time = job.Time,
                     Method = job.Method,
                     Position = job.Position,
                     Salary = job.Salary,
@@ -44,7 +43,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                     Status = job.Status,
                     Recruiter_ID = job.Recruiter_ID,
                     Image = company.Image,
-                    Badge = company.Badge
+                    Badge = company.Badge,
                 }).ToList();
 
             return Ok(result);
@@ -71,7 +70,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Skill = job.Skill,
                 Benefit = job.Benefit,
                 Gender = job.Gender,
-                Time = job.Time,
                 Method = job.Method,
                 Position = job.Position,
                 Salary = job.Salary,
@@ -79,7 +77,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Status = job.Status,
                 Recruiter_ID = job.Recruiter_ID,
                 Image = company.Image,
-                Badge = company.Badge
+                Badge = company.Badge,
             };
 
             return Ok(workDto);
@@ -97,13 +95,12 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Skill = workDto.Skill,
                 Benefit = workDto.Benefit,
                 Gender = workDto.Gender,
-                Time = workDto.Time,
                 Method = workDto.Method,
                 Position = workDto.Position,
                 Salary = workDto.Salary,
                 Create_Time = workDto.Create_Time,
                 Status = workDto.Status,
-                Recruiter_ID = workDto.Recruiter_ID
+                Recruiter_ID = workDto.Recruiter_ID,
             };
 
             _context.Job.Add(job);
@@ -126,7 +123,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
             job.Skill = workDto.Skill;
             job.Benefit = workDto.Benefit;
             job.Gender = workDto.Gender;
-            job.Time = workDto.Time;
             job.Method = workDto.Method;
             job.Position = workDto.Position;
             job.Salary = workDto.Salary;
