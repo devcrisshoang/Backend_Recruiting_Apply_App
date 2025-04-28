@@ -149,7 +149,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return NoContent();
         }
 
-
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -163,6 +162,32 @@ namespace Backend_Recruiting_Apply_App.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // Controller sửa đổi: Lấy thông tin User dựa trên Applicant_ID, luôn trả về 200 OK
+        [HttpGet("by-applicant/{applicantId}")]
+        public async Task<ActionResult<object>> GetUserByApplicantId(int applicantId)
+        {
+            // Tìm Applicant dựa trên Applicant_ID
+            var applicant = await _context.Applicant
+                .FirstOrDefaultAsync(a => a.ID == applicantId);
+
+            if (applicant == null)
+            {
+                return Ok();
+            }
+
+            // Tìm User dựa trên User_ID từ Applicant
+            var user = await _context.User
+                .FirstOrDefaultAsync(u => u.ID == applicant.User_ID);
+
+            if (user == null)
+            {
+                return Ok();
+            }
+
+            // Chuyển User thành UserDTO để trả về
+            return Ok(UserMapper.ToDTO(user));
         }
 
         private bool UserExists(int id)

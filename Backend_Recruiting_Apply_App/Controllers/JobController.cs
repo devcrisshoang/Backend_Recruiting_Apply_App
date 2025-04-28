@@ -28,10 +28,11 @@ namespace Backend_Recruiting_Apply_App.Controllers
             var job = await _context.Job.FindAsync(id);
 
             if (job == null)
-                return NotFound();
+                return Ok(null); // Trả về 200 OK với null thay vì 404
 
-            return job;
+            return Ok(job);
         }
+
         [HttpGet("recruiter/{recruiterId}")]
         public async Task<ActionResult<IEnumerable<Job>>> GetJobsByRecruiterId(int recruiterId)
         {
@@ -39,12 +40,8 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 .Where(j => j.Recruiter_ID == recruiterId)
                 .ToListAsync();
 
-            if (jobs == null || !jobs.Any())
-                return NotFound("No jobs found for the specified recruiter.");
-
-            return Ok(jobs);
+            return Ok(jobs ?? new List<Job>()); // Trả về 200 OK với mảng rỗng nếu không tìm thấy
         }
-
 
         [HttpPost]
         public async Task<ActionResult<Job>> CreateJob(Job job)
@@ -70,7 +67,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!JobExists(id))
-                    return NotFound();
+                    return Ok(); // Trả về 200 OK thay vì 404
                 else
                     throw;
             }
@@ -83,7 +80,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         {
             var job = await _context.Job.FindAsync(id);
             if (job == null)
-                return NotFound();
+                return Ok(); // Trả về 200 OK thay vì 404
 
             _context.Job.Remove(job);
             await _context.SaveChangesAsync();

@@ -12,8 +12,6 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public int ID { get; set; }
         [Column("Is_Accepted")]
         public int Is_Accepted { get; set; } = 0;
-        [Column("Is_Rejected")]
-        public int Is_Rejected { get; set; } = 0;
         [Column("Time")]
         public DateTime Time { get; set; } = DateTime.Now;
         [Column("Job_ID")]

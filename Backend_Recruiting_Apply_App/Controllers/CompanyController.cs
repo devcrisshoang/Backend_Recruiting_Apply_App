@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SystemAPIdotnet.Data;
-    
+
 namespace Backend_Recruiting_Apply_App.Controllers
 {
     [Route("api/[controller]")]
@@ -19,7 +19,8 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Company>>> GetCompany()
         {
-            return await _context.Company.ToListAsync();
+            var companies = await _context.Company.ToListAsync();
+            return Ok(companies);
         }
 
         [HttpGet("{id}")]
@@ -29,10 +30,40 @@ namespace Backend_Recruiting_Apply_App.Controllers
 
             if (company == null)
             {
-                return NotFound(new { message = "Company not found" });
+                return NotFound(new { message = "Công ty không tồn tại" });
             }
 
-            return company;
+            return Ok(company);
+        }
+
+        [HttpGet("recruiter/{recruiterId}")]
+        public async Task<ActionResult<Company>> GetCompanyByRecruiterId(int recruiterId)
+        {
+            // Tìm Recruiter theo recruiterId
+            var recruiter = await _context.Recruiter
+                .FirstOrDefaultAsync(r => r.ID == recruiterId);
+
+            if (recruiter == null)
+            {
+                return NotFound(new { message = "Nhà tuyển dụng không tồn tại" });
+            }
+
+            // Kiểm tra Company_ID có phải là 0 không
+            if (recruiter.Company_ID == 0)
+            {
+                return NotFound(new { message = "Nhà tuyển dụng không được liên kết với công ty nào" });
+            }
+
+            // Tìm Company theo CompanyId từ Recruiter
+            var company = await _context.Company
+                .FirstOrDefaultAsync(c => c.ID == recruiter.Company_ID);
+
+            if (company == null)
+            {
+                return NotFound(new { message = "Công ty không tồn tại" });
+            }
+
+            return Ok(company);
         }
 
         [HttpPost]
@@ -41,7 +72,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             _context.Company.Add(company);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCompany), new { id = company.ID }, company);
+            return CreatedAtAction(nameof(GetCompany), new { id = company.ID }, new { message = "Tạo công ty thành công", data = company });
         }
 
         [HttpPut("{id}")]
@@ -49,7 +80,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         {
             if (id != company.ID)
             {
-                return BadRequest(new { message = "ID mismatch" });
+                return BadRequest(new { message = "ID không khớp" });
             }
 
             _context.Entry(company).State = EntityState.Modified;
@@ -62,7 +93,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             {
                 if (!CompanyExists(id))
                 {
-                    return NotFound(new { message = "Company not found" });
+                    return NotFound(new { message = "Công ty không tồn tại" });
                 }
                 else
                 {
@@ -70,7 +101,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { message = "Cập nhật công ty thành công" });
         }
 
         [HttpDelete("{id}")]
@@ -79,13 +110,13 @@ namespace Backend_Recruiting_Apply_App.Controllers
             var company = await _context.Company.FindAsync(id);
             if (company == null)
             {
-                return NotFound(new { message = "Company not found" });
+                return NotFound(new { message = "Công ty không tồn tại" });
             }
 
             _context.Company.Remove(company);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Xóa công ty thành công" });
         }
 
         private bool CompanyExists(int id)

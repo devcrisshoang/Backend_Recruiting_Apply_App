@@ -19,33 +19,22 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Recruiter>>> GetRecruiter()
         {
-            return await _context.Recruiter.ToListAsync();
+            var recruiters = await _context.Recruiter.ToListAsync();
+            return Ok(recruiters ?? new List<Recruiter>());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Recruiter>> GetRecruiter(int id)
         {
             var recruiter = await _context.Recruiter.FindAsync(id);
-
-            if (recruiter == null)
-            {
-                return NotFound(new { message = "Recruiter not found" });
-            }
-
-            return recruiter;
+            return Ok(recruiter ?? null);
         }
 
         [HttpGet("check-recruiter/{userId}")]
         public async Task<IActionResult> CheckRecruiter(int userId)
         {
             var recruiter = await _context.Recruiter.FirstOrDefaultAsync(r => r.User_ID == userId);
-
-            if (recruiter == null)
-            {
-                return NotFound(new { message = "Recruiter profile not found" });
-            }
-
-            return Ok(recruiter);
+            return Ok(recruiter ?? null);
         }
 
         [HttpPost]
@@ -65,7 +54,13 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return BadRequest(new { message = "ID mismatch" });
             }
 
-            _context.Entry(recruiter).State = EntityState.Modified;
+            var existingRecruiter = await _context.Recruiter.FindAsync(id);
+            if (existingRecruiter == null)
+            {
+                return Ok(null); // Trả về 200 rỗng thay vì 404
+            }
+
+            _context.Entry(existingRecruiter).CurrentValues.SetValues(recruiter);
 
             try
             {
@@ -75,12 +70,9 @@ namespace Backend_Recruiting_Apply_App.Controllers
             {
                 if (!RecruiterExists(id))
                 {
-                    return NotFound(new { message = "Recruiter not found" });
+                    return Ok(null); // Trả về 200 rỗng thay vì 404
                 }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
             return NoContent();
@@ -92,7 +84,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             var recruiter = await _context.Recruiter.FindAsync(id);
             if (recruiter == null)
             {
-                return NotFound(new { message = "Recruiter not found" });
+                return Ok(null); // Trả về 200 rỗng thay vì 404
             }
 
             _context.Recruiter.Remove(recruiter);

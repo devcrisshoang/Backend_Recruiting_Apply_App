@@ -1,12 +1,10 @@
-﻿using Backend_Recruiting_Apply_App.Data;
-using Backend_Recruiting_Apply_App.Data.Entities;
+﻿using Backend_Recruiting_Apply_App.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using BCrypt.Net;
 using System.Net.Mail;
 using System.Net;
 using SystemAPIdotnet.Data;
@@ -45,7 +43,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Email = request.Email,
                 Phone = request.Phone,
                 Username = request.Username,
-                Password = hashedPassword, // Lưu mật khẩu đã băm
+                Password = hashedPassword,
                 Type = request.Type
             };
 
@@ -148,22 +146,22 @@ namespace Backend_Recruiting_Apply_App.Controllers
     // 📌 Request models
     public class RegisterRequest
     {
-        public string Name { get; set; } = "";
-        public string Email { get; set; }
-        public string Phone { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public int Type { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public int Type { get; set; } = 0;
     }
 
     public class LoginRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 
     public class ForgotPasswordRequest
     {
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
     }
 }
