@@ -18,7 +18,7 @@ namespace SystemAPIdotnet.Data
         public DbSet<Category> Category { get; set; }
         public DbSet<Notification> Notification { get; set; }
         public DbSet<Recruiter> Recruiter { get; set; }
-        public DbSet<Apply> ApplicantJob { get; set; }
+        public DbSet<Apply> Apply { get; set; }
         public DbSet<Admin> Admin { get; set; }
         public DbSet<ApplyDto> JobDetails { get; set; }
         public DbSet<Field> Field { get; set; }
@@ -26,6 +26,7 @@ namespace SystemAPIdotnet.Data
         public DbSet<Province> Province { get; set; }
         public DbSet<Experience> Experience { get; set; }
         public DbSet<Payment> Payment { get; set; }
+        public DbSet<Follow> Follow { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

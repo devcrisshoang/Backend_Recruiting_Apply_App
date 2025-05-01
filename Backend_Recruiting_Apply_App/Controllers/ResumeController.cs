@@ -48,7 +48,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return Ok(resumes);
         }
 
-
         [HttpPost]
         public async Task<ActionResult<Resume>> CreateResume(Resume resume)
         {
@@ -85,9 +84,8 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return NoContent();
         }
 
-
         [HttpPut("{id}/image")]
-        public async Task<IActionResult> UpdateResumeImage(int id, [FromBody] byte[] image)
+        public async Task<IActionResult> UpdateResumeImage(int id, [FromBody] UpdateResumeImageDto dto)
         {
             var resume = await _context.Resume.FindAsync(id);
             if (resume == null)
@@ -95,7 +93,22 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return NotFound(new { message = "Resume not found" });
             }
 
-            resume.Image = image;
+            resume.Image = dto.Image;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/is-delete")]
+        public async Task<IActionResult> UpdateResumeIsDelete(int id, [FromBody] UpdateResumeIsDeleteDto dto)
+        {
+            var resume = await _context.Resume.FindAsync(id);
+            if (resume == null)
+            {
+                return NotFound(new { message = "Resume not found" });
+            }
+
+            resume.Is_Delete = dto.Is_delete;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -137,8 +150,14 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
         }
     }
+
     public class UpdateResumeImageDto
     {
         public byte[] Image { get; set; } = [];
+    }
+
+    public class UpdateResumeIsDeleteDto
+    {
+        public int Is_delete { get; set; }
     }
 }

@@ -17,23 +17,23 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Apply>>> GetApplicantJob()
+        public async Task<ActionResult<IEnumerable<Apply>>> GetApply()
         {
-            return await _context.ApplicantJob.ToListAsync();
+            return await _context.Apply.ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Apply>> GetApplicantJob(int id)
+        public async Task<ActionResult<Apply>> GetApply(int id)
         {
-            var applicantJob = await _context.ApplicantJob.FindAsync(id);
-            return Ok(applicantJob); // Trả về 200 OK với null nếu không tìm thấy
+            var Apply = await _context.Apply.FindAsync(id);
+            return Ok(Apply); // Trả về 200 OK với null nếu không tìm thấy
         }
 
         // Lấy danh sách bản ghi Apply với Is_Accepted = 1 dựa trên jobId
         [HttpGet("accepted-by-job/{jobId}")]
         public async Task<ActionResult<IEnumerable<Apply>>> GetAcceptedApplicantsByJobId(int jobId)
         {
-            var applies = await _context.ApplicantJob
+            var applies = await _context.Apply
                 .Where(a => a.Job_ID == jobId && a.Is_Accepted == 1)
                 .ToListAsync();
 
@@ -44,7 +44,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet("pending-by-job/{jobId}")]
         public async Task<ActionResult<IEnumerable<Apply>>> GetPendingApplicantsByJobId(int jobId)
         {
-            var applies = await _context.ApplicantJob
+            var applies = await _context.Apply
                 .Where(a => a.Job_ID == jobId && a.Is_Accepted == 2)
                 .ToListAsync();
 
@@ -55,30 +55,48 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet("rejected-by-job/{jobId}")]
         public async Task<ActionResult<IEnumerable<Apply>>> GetRejectedApplicantsByJobId(int jobId)
         {
-            var applies = await _context.ApplicantJob
+            var applies = await _context.Apply
                 .Where(a => a.Job_ID == jobId && a.Is_Accepted == 0)
                 .ToListAsync();
 
             return Ok(applies ?? new List<Apply>());
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Apply>> CreateApplicantJob(Apply applicantJob)
+        [HttpGet("appliedJob/applicant/{id}")]
+        public async Task<ActionResult<IEnumerable<Job>>> GetAppliedJobByApplicantId(int id)
         {
-            _context.ApplicantJob.Add(applicantJob);
+            var jobs = await _context.Apply
+                .Where(a => a.Applicant_ID == id) // Lọc các bản ghi Apply có Applicant_ID khớp với id
+                .Join(
+                    _context.Job, // Bảng Job
+                    apply => apply.Job_ID, // Khóa ngoại từ Apply
+                    job => job.ID, // Khóa chính từ Job
+                    (apply, job) => job // Lấy thông tin Job
+                )
+                .GroupBy(job => job.ID) // Nhóm theo Job.ID để loại bỏ trùng lặp
+                .Select(group => group.First()) // Lấy bản ghi đầu tiên trong mỗi nhóm
+                .ToListAsync();
+
+            return Ok(jobs);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Apply>> CreateApply(Apply Apply)
+        {
+            _context.Apply.Add(Apply);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetApplicantJob), new { id = applicantJob.ID }, applicantJob);
+            return CreatedAtAction(nameof(GetApply), new { id = Apply.ID }, Apply);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateApplicantJob(int id, Apply applicantJob)
+        public async Task<IActionResult> UpdateApply(int id, Apply Apply)
         {
-            if (id != applicantJob.ID)
+            if (id != Apply.ID)
             {
                 return BadRequest();
             }
 
-            _context.Entry(applicantJob).State = EntityState.Modified;
+            _context.Entry(Apply).State = EntityState.Modified;
 
             try
             {
@@ -86,7 +104,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.ApplicantJob.Any(e => e.ID == id))
+                if (!_context.Apply.Any(e => e.ID == id))
                 {
                     return Ok(); // Trả về 200 OK thay vì 404
                 }
@@ -101,14 +119,14 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpPut("{id}/is-accepted")]
         public async Task<IActionResult> UpdateIsAccepted(int id, [FromBody] int isAccepted)
         {
-            var applicantJob = await _context.ApplicantJob.FindAsync(id);
-            if (applicantJob == null)
+            var Apply = await _context.Apply.FindAsync(id);
+            if (Apply == null)
             {
                 return Ok(); // Trả về 200 OK thay vì 404 để đồng bộ với các hàm khác
             }
 
-            applicantJob.Is_Accepted = isAccepted;
-            _context.Entry(applicantJob).Property(x => x.Is_Accepted).IsModified = true;
+            Apply.Is_Accepted = isAccepted;
+            _context.Entry(Apply).Property(x => x.Is_Accepted).IsModified = true;
 
             try
             {
@@ -116,7 +134,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.ApplicantJob.Any(e => e.ID == id))
+                if (!_context.Apply.Any(e => e.ID == id))
                 {
                     return Ok(); // Trả về 200 OK thay vì 404
                 }
@@ -129,15 +147,15 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteApplicantJob(int id)
+        public async Task<IActionResult> DeleteApply(int id)
         {
-            var applicantJob = await _context.ApplicantJob.FindAsync(id);
-            if (applicantJob == null)
+            var Apply = await _context.Apply.FindAsync(id);
+            if (Apply == null)
             {
                 return Ok(); // Trả về 200 OK thay vì 404
             }
 
-            _context.ApplicantJob.Remove(applicantJob);
+            _context.Apply.Remove(Apply);
             await _context.SaveChangesAsync();
             return NoContent();
         }
@@ -146,7 +164,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet("jobs-by-applicant/{applicantId}")]
         public async Task<ActionResult<IEnumerable<Job>>> GetJobsByApplicantId(int applicantId)
         {
-            var applyRecords = await _context.ApplicantJob
+            var applyRecords = await _context.Apply
                 .Where(a => a.Applicant_ID == applicantId)
                 .Select(a => a.Job_ID)
                 .Distinct()
@@ -163,7 +181,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet("applicants-by-job/{jobId}")]
         public async Task<ActionResult<IEnumerable<Applicant>>> GetApplicantsByJobId(int jobId)
         {
-            var applyRecords = await _context.ApplicantJob
+            var applyRecords = await _context.Apply
                 .Where(a => a.Job_ID == jobId)
                 .Select(a => a.Applicant_ID)
                 .Distinct()
@@ -187,7 +205,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
 
             // Tìm bản ghi Apply khớp với jobId và applicantId
-            var applyRecord = await _context.ApplicantJob
+            var applyRecord = await _context.Apply
                 .Where(a => a.Job_ID == jobId && a.Applicant_ID == applicantId)
                 .Select(a => a.Resume_ID)
                 .FirstOrDefaultAsync();
@@ -206,7 +224,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
 
             // Tìm bản ghi Apply khớp với jobId, resumeId và applicantId
-            var applyRecord = await _context.ApplicantJob
+            var applyRecord = await _context.Apply
                 .Where(a => a.Job_ID == jobId && a.Resume_ID == resumeId && a.Applicant_ID == applicantId)
                 .Select(a => a.ID)
                 .FirstOrDefaultAsync();

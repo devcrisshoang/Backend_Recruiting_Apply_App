@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using Backend_Recruiting_Apply_App.Data;
+using SystemAPIdotnet.Data;
 using Microsoft.AspNetCore.SignalR;
 using Backend_Recruiting_Apply_App.Hubs;
-using Backend_Recruiting_Apply_App.Data.Dtos;
-using SystemAPIdotnet.Data;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -26,8 +24,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         public async Task<ActionResult<IEnumerable<Message>>> GetMessage()
         {
             Console.WriteLine("Fetching all messages");
-            var messages = await _context.Message.ToListAsync();
-            return Ok(messages ?? new List<Message>());
+            return await _context.Message.ToListAsync();
         }
 
         [HttpGet("{id}")]
@@ -40,24 +37,12 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 Console.WriteLine($"Message not found: {id}");
                 return NotFound();
             }
-            return Ok(message);
+            return message;
         }
 
         [HttpPost]
         public async Task<ActionResult<Message>> SendMessage(Message message)
         {
-            if (message.Sender_ID <= 0 || message.Receiver_ID <= 0)
-            {
-                Console.WriteLine("Invalid Sender_ID or Receiver_ID");
-                return BadRequest("Sender_ID và Receiver_ID phải lớn hơn 0.");
-            }
-
-            if (string.IsNullOrWhiteSpace(message.Content))
-            {
-                Console.WriteLine("Message content cannot be empty");
-                return BadRequest("Nội dung tin nhắn không được để trống.");
-            }
-
             message.Time = DateTime.UtcNow;
             Console.WriteLine($"Saving message: SenderId={message.Sender_ID}, ReceiverId={message.Receiver_ID}, Content={message.Content}");
             _context.Message.Add(message);
@@ -70,11 +55,11 @@ namespace Backend_Recruiting_Apply_App.Controllers
             Console.WriteLine($"Sending ReceiveMessage to group: {conversationKey}, MessageId: {message.ID}, SenderId: {message.Sender_ID}, ReceiverId: {message.Receiver_ID}");
             await _hubContext.Clients.Group(conversationKey).SendAsync(
                 "ReceiveMessage",
-                message.ID,
+                message.ID, // Add message.ID
                 message.Sender_ID,
                 message.Receiver_ID,
                 message.Content,
-                message.Time.ToString("o") // Định dạng ISO 8601 cho thời gian
+                message.Time
             );
 
             return CreatedAtAction(nameof(GetMessage), new { id = message.ID }, message);
@@ -87,12 +72,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
             {
                 Console.WriteLine($"Invalid message ID: {id} does not match {message.ID}");
                 return BadRequest();
-            }
-
-            if (string.IsNullOrWhiteSpace(message.Content))
-            {
-                Console.WriteLine("Message content cannot be empty");
-                return BadRequest("Nội dung tin nhắn không được để trống.");
             }
 
             _context.Entry(message).State = EntityState.Modified;
@@ -111,7 +90,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                     "UpdateMessage",
                     message.ID,
                     message.Content,
-                    message.Time.ToString("o")
+                    message.Time
                 );
             }
             catch (DbUpdateConcurrencyException)
@@ -163,7 +142,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 if (messages == null || !messages.Any())
                 {
                     Console.WriteLine("No messages found to delete");
-                    return Ok(new { Message = "No messages found to delete." });
+                    return NotFound(new { Message = "No messages found to delete." });
                 }
 
                 _context.Message.RemoveRange(messages);
@@ -196,12 +175,6 @@ namespace Backend_Recruiting_Apply_App.Controllers
         {
             try
             {
-                if (senderId <= 0 || receiverId <= 0)
-                {
-                    Console.WriteLine("Invalid senderId or receiverId");
-                    return BadRequest("senderId và receiverId phải lớn hơn 0.");
-                }
-
                 Console.WriteLine($"Fetching messages: SenderId={senderId}, ReceiverId={receiverId}, Skip={skip}, Take={take}");
                 var messages = await _context.Message
                     .Where(m => (m.Sender_ID == senderId && m.Receiver_ID == receiverId) ||
@@ -212,7 +185,13 @@ namespace Backend_Recruiting_Apply_App.Controllers
                     .OrderBy(m => m.Time)
                     .ToListAsync();
 
-                return Ok(messages ?? new List<Message>());
+                if (messages == null || !messages.Any())
+                {
+                    Console.WriteLine($"No messages found between sender {senderId} and receiver {receiverId}");
+                    return NotFound(new { Message = $"No messages found between sender {senderId} and receiver {receiverId}." });
+                }
+
+                return Ok(messages);
             }
             catch (Exception ex)
             {
@@ -222,16 +201,10 @@ namespace Backend_Recruiting_Apply_App.Controllers
         }
 
         [HttpGet("conversations/{userId}")]
-        public async Task<ActionResult<IEnumerable<ConversationDto>>> GetConversations(int userId)
+        public async Task<ActionResult<IEnumerable<object>>> GetConversations(int userId)
         {
             try
             {
-                if (userId <= 0)
-                {
-                    Console.WriteLine("Invalid userId");
-                    return BadRequest("userId phải lớn hơn 0.");
-                }
-
                 Console.WriteLine($"Fetching conversations for user: {userId}");
                 var messages = await _context.Message
                     .Where(m => m.Sender_ID == userId || m.Receiver_ID == userId)
@@ -241,25 +214,24 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 if (messages == null || !messages.Any())
                 {
                     Console.WriteLine($"No conversations found for user: {userId}");
-                    return Ok(new List<ConversationDto>());
+                    return NotFound(new { Message = $"No conversations found for user {userId}." });
                 }
 
                 var conversations = messages
                     .GroupBy(m => m.Sender_ID < m.Receiver_ID
                         ? $"{m.Sender_ID}_{m.Receiver_ID}"
                         : $"{m.Receiver_ID}_{m.Sender_ID}")
-                    .Select(group =>
-                    {
+                    .Select(group => {
                         var lastMessage = group.OrderByDescending(m => m.Time).First();
-                        return new ConversationDto
+                        return new
                         {
-                            ConversationKey = group.Key,
-                            LastMessage = lastMessage.Content,
-                            OtherUserId = lastMessage.Sender_ID == userId ? lastMessage.Receiver_ID : lastMessage.Sender_ID,
-                            Timestamp = lastMessage.Time
+                            conversationKey = group.Key,
+                            lastMessage = lastMessage.Content,
+                            otherUserId = lastMessage.Sender_ID == userId ? lastMessage.Receiver_ID : lastMessage.Sender_ID,
+                            timestamp = lastMessage.Time
                         };
                     })
-                    .OrderByDescending(c => c.Timestamp)
+                    .OrderByDescending(c => c.timestamp)
                     .ToList();
 
                 return Ok(conversations);

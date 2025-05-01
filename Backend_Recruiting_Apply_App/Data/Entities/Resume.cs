@@ -18,5 +18,7 @@ namespace Backend_Recruiting_Apply_App.Data.Entities
         public DateTime Create_Time {  get; set; } = DateTime.Now;
         [Column("Applicant_ID")]
         public int Applicant_ID { get; set; } = 0;
+        [Column("Is_Delete")]
+        public int Is_Delete { get; set; } = 0;
     }
 }
