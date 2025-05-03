@@ -1,5 +1,4 @@
-﻿using Backend_Recruiting_Apply_App.Data;
-using Backend_Recruiting_Apply_App.Data.DTOs;
+﻿using Backend_Recruiting_Apply_App.Data.DTOs;
 using Backend_Recruiting_Apply_App.Data.Entities;
 using Backend_Recruiting_Apply_App.Data.Mappers;
 using Microsoft.AspNetCore.Mvc;
@@ -144,6 +143,21 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
 
             user.Image = image;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/type")]
+        public async Task<IActionResult> UpdateUserType(int id, [FromBody] int type)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.Type = type;
             await _context.SaveChangesAsync();
 
             return NoContent();

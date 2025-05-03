@@ -43,6 +43,21 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return Ok(jobs ?? new List<Job>()); // Trả về 200 OK với mảng rỗng nếu không tìm thấy
         }
 
+        [HttpGet("company/{id}")]
+        public async Task<ActionResult<IEnumerable<Job>>> GetJobByCompanyId(int id)
+        {
+            var jobs = await _context.Recruiter
+                .Where(j => j.Company_ID == id)
+                .Join(
+                _context.Job,
+                recruiter => recruiter.ID,
+                job => job.Recruiter_ID,
+                (recruiter, job) => job
+                ).ToListAsync();
+
+            return Ok(jobs ?? new List<Job>());
+        }
+
         [HttpPost]
         public async Task<ActionResult<Job>> CreateJob(Job job)
         {
