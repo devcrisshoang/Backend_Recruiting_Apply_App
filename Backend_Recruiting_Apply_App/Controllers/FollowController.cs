@@ -43,6 +43,13 @@ namespace Backend_Recruiting_Apply_App.Controllers
             return Ok(companies);
         }
 
+        [HttpGet("follow-applicant/company/{id}")]
+        public async Task<ActionResult<Follow>> GetFollowApplicantByCompanyId(int id)
+        {
+            var applicants = await _followService.GetFollowedApplicantListByCompanyIdAsync(id);
+            return Ok(applicants);
+        }
+
         [HttpPost]
         public async Task<ActionResult<Follow>> CreateFollow(Follow follow)
         {

@@ -12,6 +12,7 @@ namespace Backend_Recruiting_Apply_App.Services
         Task<Follow?> GetFollowByApplicantAndCompanyAsync(int applicantId, int companyId);
         Task<List<Follow>> GetFollowedCompaniesByApplicantIdAsync(int applicantId);
         Task<List<Company>> GetFollowedCompanyListByApplicantIdAsync(int applicantId);
+        Task<List<Applicant>> GetFollowedApplicantListByCompanyIdAsync(int companyId);
         Task<Follow> CreateFollowAsync(Follow follow);
         Task<bool> DeleteFollowAsync(int applicantId, int companyId);
     }
@@ -53,6 +54,21 @@ namespace Backend_Recruiting_Apply_App.Services
                     company => company.ID,
                     (follow, company) => company
                 )
+                .ToListAsync();
+        }
+
+        public async Task<List<Applicant>> GetFollowedApplicantListByCompanyIdAsync(int companyId)
+        {
+            return await _dbContext.Follow
+                .Where(f => f.CompanyID == companyId)
+                .Join(
+                    _dbContext.Applicant,
+                    follow => follow.ApplicantID,
+                    applicant => applicant.ID,
+                    (follow, applicant) => applicant
+                )
+                .GroupBy(applicant => applicant.User_ID)
+                .Select(group => group.First())
                 .ToListAsync();
         }
 
