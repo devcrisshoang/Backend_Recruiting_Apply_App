@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using SystemAPIdotnet.Data;
+using Backend_Recruiting_Apply_App.Services;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,51 +10,48 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class ResumeController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IResumeService _resumeService;
 
-        public ResumeController(RAADbContext context)
+        public ResumeController(IResumeService resumeService)
         {
-            _context = context;
+            _resumeService = resumeService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Resume>>> GetResume()
         {
-            return await _context.Resume.ToListAsync();
+            var resumes = await _resumeService.GetAllResumesAsync();
+
+            return Ok(resumes);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Resume>> GetResume(int id)
         {
-            var resume = await _context.Resume.FindAsync(id);
+            var resume = await _resumeService.GetResumeByIdAsync(id);
             if (resume == null)
             {
                 return NotFound();
             }
-            return resume;
+            return Ok(resume);
         }
 
         [HttpGet("applicantID/{id}")]
         public async Task<ActionResult> GetResumeByApplicantID(int id)
         {
-            var resumes = await _context.Resume
-                .Where(r => r.Applicant_ID == id)
-                .ToListAsync();
-
-            if (resumes == null || resumes.Count == 0)
+            var resumes = await _resumeService.GetResumesByApplicantIdAsync(id);
+            if (resumes == null || !resumes.Any())
             {
                 return NotFound(new { message = "No resumes found for the given applicant ID" });
             }
-
             return Ok(resumes);
         }
 
         [HttpPost]
         public async Task<ActionResult<Resume>> CreateResume(Resume resume)
         {
-            _context.Resume.Add(resume);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetResume), new { id = resume.ID }, resume);
+            var createdResume = await _resumeService.CreateResumeAsync(resume);
+            return CreatedAtAction(nameof(GetResume), new { id = createdResume.ID }, createdResume);
         }
 
         [HttpPut("{id}")]
@@ -64,22 +62,10 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(resume).State = EntityState.Modified;
-
-            try
+            var result = await _resumeService.UpdateResumeAsync(id, resume);
+            if (!result)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Resume.Any(e => e.ID == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
             return NoContent();
         }
@@ -87,44 +73,33 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpPut("{id}/image")]
         public async Task<IActionResult> UpdateResumeImage(int id, [FromBody] UpdateResumeImageDto dto)
         {
-            var resume = await _context.Resume.FindAsync(id);
-            if (resume == null)
+            var result = await _resumeService.UpdateResumeImageAsync(id, dto);
+            if (!result)
             {
                 return NotFound(new { message = "Resume not found" });
             }
-
-            resume.Image = dto.Image;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpPut("{id}/is-delete")]
         public async Task<IActionResult> UpdateResumeIsDelete(int id, [FromBody] UpdateResumeIsDeleteDto dto)
         {
-            var resume = await _context.Resume.FindAsync(id);
-            if (resume == null)
+            var result = await _resumeService.UpdateResumeIsDeleteAsync(id, dto);
+            if (!result)
             {
                 return NotFound(new { message = "Resume not found" });
             }
-
-            resume.Is_Delete = dto.Is_delete;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteResume(int id)
         {
-            var resume = await _context.Resume.FindAsync(id);
-            if (resume == null)
+            var result = await _resumeService.DeleteResumeAsync(id);
+            if (!result)
             {
                 return NotFound();
             }
-
-            _context.Resume.Remove(resume);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -133,15 +108,11 @@ namespace Backend_Recruiting_Apply_App.Controllers
         {
             try
             {
-                var resumes = await _context.Resume.ToListAsync();
-                if (resumes == null || resumes.Count == 0)
+                var result = await _resumeService.DeleteAllResumesAsync();
+                if (!result)
                 {
                     return NotFound(new { message = "No resumes found to delete" });
                 }
-
-                _context.Resume.RemoveRange(resumes);
-                await _context.SaveChangesAsync();
-
                 return Ok(new { message = "All resumes have been deleted successfully" });
             }
             catch (Exception ex)
@@ -149,15 +120,5 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return StatusCode(500, new { message = "An error occurred while deleting all resumes", error = ex.Message });
             }
         }
-    }
-
-    public class UpdateResumeImageDto
-    {
-        public byte[] Image { get; set; } = [];
-    }
-
-    public class UpdateResumeIsDeleteDto
-    {
-        public int Is_delete { get; set; }
     }
 }

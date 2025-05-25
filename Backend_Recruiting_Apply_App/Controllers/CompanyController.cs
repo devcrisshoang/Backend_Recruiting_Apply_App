@@ -1,7 +1,10 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Services;
 using SystemAPIdotnet.Data;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,119 +12,79 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class CompanyController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly ICompanyService _companyService;
+        private readonly RAADbContext _dbContext;
 
-        public CompanyController(RAADbContext context)
+        public CompanyController(ICompanyService companyService, RAADbContext dbContext)
         {
-            _context = context;
+            _companyService = companyService;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Company>>> GetCompany()
         {
-            var companies = await _context.Company.ToListAsync();
+            var companies = await _companyService.GetAllCompaniesAsync();
             return Ok(companies);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Company>> GetCompany(int id)
         {
-            var company = await _context.Company.FindAsync(id);
-
+            var company = await _companyService.GetCompanyByIdAsync(id);
             if (company == null)
             {
                 return NotFound(new { message = "Công ty không tồn tại" });
             }
-
             return Ok(company);
         }
 
         [HttpGet("recruiter/{recruiterId}")]
         public async Task<ActionResult<Company>> GetCompanyByRecruiterId(int recruiterId)
         {
-            // Tìm Recruiter theo recruiterId
-            var recruiter = await _context.Recruiter
-                .FirstOrDefaultAsync(r => r.ID == recruiterId);
-
-            if (recruiter == null)
-            {
-                return NotFound(new { message = "Nhà tuyển dụng không tồn tại" });
-            }
-
-            // Kiểm tra Company_ID có phải là 0 không
-            if (recruiter.Company_ID == 0)
-            {
-                return NotFound(new { message = "Nhà tuyển dụng không được liên kết với công ty nào" });
-            }
-
-            // Tìm Company theo CompanyId từ Recruiter
-            var company = await _context.Company
-                .FirstOrDefaultAsync(c => c.ID == recruiter.Company_ID);
-
+            var company = await _companyService.GetCompanyByRecruiterIdAsync(recruiterId);
             if (company == null)
             {
-                return NotFound(new { message = "Công ty không tồn tại" });
+                // Check if recruiter exists
+                var recruiterExists = await _dbContext.Recruiter.AnyAsync(r => r.ID == recruiterId);
+                if (!recruiterExists)
+                {
+                    return NotFound(new { message = "Nhà tuyển dụng không tồn tại" });
+                }
+                return NotFound(new { message = "Nhà tuyển dụng không được liên kết với công ty nào" });
             }
-
             return Ok(company);
         }
 
         [HttpPost]
         public async Task<ActionResult<Company>> CreateCompany(Company company)
         {
-            _context.Company.Add(company);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCompany), new { id = company.ID }, new { message = "Tạo công ty thành công", data = company });
+            var createdCompany = await _companyService.CreateCompanyAsync(company);
+            return CreatedAtAction(nameof(GetCompany), new { id = createdCompany.ID }, new { message = "Tạo công ty thành công", data = createdCompany });
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCompany(int id, Company company)
         {
-            if (id != company.ID)
+            var success = await _companyService.UpdateCompanyAsync(id, company);
+            if (!success)
             {
-                return BadRequest(new { message = "ID không khớp" });
+                return id != company.ID
+                    ? BadRequest(new { message = "ID không khớp" })
+                    : NotFound(new { message = "Công ty không tồn tại" });
             }
-
-            _context.Entry(company).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CompanyExists(id))
-                {
-                    return NotFound(new { message = "Công ty không tồn tại" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return Ok(new { message = "Cập nhật công ty thành công" });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCompany(int id)
         {
-            var company = await _context.Company.FindAsync(id);
-            if (company == null)
+            var success = await _companyService.DeleteCompanyAsync(id);
+            if (!success)
             {
                 return NotFound(new { message = "Công ty không tồn tại" });
             }
-
-            _context.Company.Remove(company);
-            await _context.SaveChangesAsync();
-
             return Ok(new { message = "Xóa công ty thành công" });
-        }
-
-        private bool CompanyExists(int id)
-        {
-            return _context.Company.Any(e => e.ID == id);
         }
     }
 }

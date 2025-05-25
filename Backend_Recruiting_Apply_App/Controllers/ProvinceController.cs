@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using SystemAPIdotnet.Data;
+using Backend_Recruiting_Apply_App.Services;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,60 +10,48 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class ProvinceController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IProvinceService _provinceService;
 
-        public ProvinceController(RAADbContext context)
+        public ProvinceController(IProvinceService provinceService)
         {
-            _context = context;
+            _provinceService = provinceService;
         }
 
         // GET: api/Province
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Province>>> GetProvince()
         {
-            return await _context.Province.ToListAsync();
+            var provinces = await _provinceService.GetAllProvincesAsync();
+            return Ok(provinces);
         }
 
         // GET: api/Province/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Province>> GetProvince(int id)
         {
-            var province = await _context.Province.FindAsync(id);
+            var province = await _provinceService.GetProvinceByIdAsync(id);
 
             if (province == null)
                 return NotFound();
 
-            return province;
+            return Ok(province);
         }
 
         // POST: api/Province
         [HttpPost]
         public async Task<ActionResult<Province>> CreateProvince(Province province)
         {
-            _context.Province.Add(province);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProvince), new { id = province.ID }, province);
+            var createdProvince = await _provinceService.CreateProvinceAsync(province);
+            return CreatedAtAction(nameof(GetProvince), new { id = createdProvince.ID }, createdProvince);
         }
 
         // PUT: api/Province/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProvince(int id, Province province)
         {
-            if (id != province.ID)
-                return BadRequest();
-
-            _context.Entry(province).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProvinceExists(id))
-                    return NotFound();
-                throw;
-            }
+            var result = await _provinceService.UpdateProvinceAsync(id, province);
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }
@@ -71,19 +60,11 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProvince(int id)
         {
-            var province = await _context.Province.FindAsync(id);
-            if (province == null)
+            var result = await _provinceService.DeleteProvinceAsync(id);
+            if (!result)
                 return NotFound();
 
-            _context.Province.Remove(province);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool ProvinceExists(int id)
-        {
-            return _context.Province.Any(e => e.ID == id);
         }
     }
 }

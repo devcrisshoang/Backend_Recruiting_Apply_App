@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using SystemAPIdotnet.Data;
+using Backend_Recruiting_Apply_App.Services;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,81 +8,58 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class ExperienceController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IExperienceService _experienceService;
 
-        public ExperienceController(RAADbContext context)
+        public ExperienceController(IExperienceService experienceService)
         {
-            _context = context;
+            _experienceService = experienceService;
         }
 
-        // GET: api/Experience
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Experience>>> GetExperience()
         {
-            return await _context.Experience.ToListAsync();
+            var experiences = await _experienceService.GetAllExperiencesAsync();
+            return Ok(experiences);
         }
 
-        // GET: api/Experience/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Experience>> GetExperience(int id)
         {
-            var experience = await _context.Experience.FindAsync(id);
-
+            var experience = await _experienceService.GetExperienceByIdAsync(id);
             if (experience == null)
+            {
                 return NotFound();
-
-            return experience;
+            }
+            return Ok(experience);
         }
 
-        // POST: api/Experience
         [HttpPost]
         public async Task<ActionResult<Experience>> CreateExperience(Experience experience)
         {
-            _context.Experience.Add(experience);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetExperience), new { id = experience.ID }, experience);
+            var createdExperience = await _experienceService.CreateExperienceAsync(experience);
+            return CreatedAtAction(nameof(GetExperience), new { id = createdExperience.ID }, createdExperience);
         }
 
-        // PUT: api/Experience/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateExperience(int id, Experience experience)
         {
-            if (id != experience.ID)
-                return BadRequest();
-
-            _context.Entry(experience).State = EntityState.Modified;
-            try
+            var success = await _experienceService.UpdateExperienceAsync(id, experience);
+            if (!success)
             {
-                await _context.SaveChangesAsync();
+                return id != experience.ID ? BadRequest() : NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ExperienceExists(id))
-                    return NotFound();
-                throw;
-            }
-
             return NoContent();
         }
 
-        // DELETE: api/Experience/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExperience(int id)
         {
-            var experience = await _context.Experience.FindAsync(id);
-            if (experience == null)
+            var success = await _experienceService.DeleteExperienceAsync(id);
+            if (!success)
+            {
                 return NotFound();
-
-            _context.Experience.Remove(experience);
-            await _context.SaveChangesAsync();
-
+            }
             return NoContent();
-        }
-
-        private bool ExperienceExists(int id)
-        {
-            return _context.Experience.Any(e => e.ID == id);
         }
     }
 }

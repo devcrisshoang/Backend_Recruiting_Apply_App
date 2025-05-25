@@ -1,8 +1,8 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SystemAPIdotnet.Data;
-
+﻿using Microsoft.AspNetCore.Mvc;
+using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -10,195 +10,102 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class ApplicantController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IApplicantService _applicantService;
 
-        public ApplicantController(RAADbContext context)
+        public ApplicantController(IApplicantService applicantService)
         {
-            _context = context;
+            _applicantService = applicantService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Applicant>>> GetApplicant()
         {
-            return await _context.Applicant.ToListAsync();
+            var applicants = await _applicantService.GetAllApplicantsAsync();
+            return Ok(applicants);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Applicant>> GetApplicant(int id)
         {
-            var applicant = await _context.Applicant.FindAsync(id);
-
+            var applicant = await _applicantService.GetApplicantByIdAsync(id);
             if (applicant == null)
             {
                 return NotFound(new { message = "Applicant not found" });
             }
-
-            return applicant;
+            return Ok(applicant);
         }
-
 
         [HttpGet("check-applicant/{userId}")]
         public async Task<IActionResult> CheckApplicant(int userId)
         {
-            var applicant = await _context.Applicant.FirstOrDefaultAsync(a => a.User_ID == userId);
-
+            var applicant = await _applicantService.GetApplicantByUserIdAsync(userId);
             if (applicant == null)
             {
                 return NotFound(new { message = "Applicant profile not found" });
             }
-
             return Ok(applicant);
         }
-
 
         [HttpPost]
         public async Task<ActionResult<Applicant>> CreateApplicant(Applicant applicant)
         {
-            _context.Applicant.Add(applicant);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetApplicant), new { id = applicant.ID }, applicant);
+            var createdApplicant = await _applicantService.CreateApplicantAsync(applicant);
+            return CreatedAtAction(nameof(GetApplicant), new { id = createdApplicant.ID }, createdApplicant);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateApplicant(int id, Applicant applicant)
         {
-            if (id != applicant.ID)
+            var success = await _applicantService.UpdateApplicantAsync(id, applicant);
+            if (!success)
             {
                 return BadRequest(new { message = "ID mismatch" });
             }
-
-            _context.Entry(applicant).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ApplicantExists(id))
-                {
-                    return NotFound(new { message = "Applicant not found" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         [HttpPut("{id}/experience")]
         public async Task<IActionResult> UpdateExperience(int id, [FromBody] string experience)
         {
-            var applicant = await _context.Applicant.FindAsync(id);
-            if (applicant == null)
+            var success = await _applicantService.UpdateExperienceAsync(id, experience);
+            if (!success)
             {
                 return NotFound(new { message = "Applicant not found" });
             }
-
-            applicant.Experience = experience;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Applicant.Any(e => e.ID == id))
-                {
-                    return NotFound(new { message = "Applicant not found" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         [HttpPut("{id}/job")]
         public async Task<IActionResult> UpdateJob(int id, [FromBody] string job)
         {
-            var applicant = await _context.Applicant.FindAsync(id);
-            if (applicant == null)
+            var success = await _applicantService.UpdateJobAsync(id, job);
+            if (!success)
             {
                 return NotFound(new { message = "Applicant not found" });
             }
-
-            applicant.Job = job;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Applicant.Any(e => e.ID == id))
-                {
-                    return NotFound(new { message = "Applicant not found" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         [HttpPut("{id}/location")]
         public async Task<IActionResult> UpdateLocation(int id, [FromBody] string location)
         {
-            var applicant = await _context.Applicant.FindAsync(id);
-            if (applicant == null)
+            var success = await _applicantService.UpdateLocationAsync(id, location);
+            if (!success)
             {
                 return NotFound(new { message = "Applicant not found" });
             }
-
-            applicant.Location = location;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Applicant.Any(e => e.ID == id))
-                {
-                    return NotFound(new { message = "Applicant not found" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
-
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteApplicant(int id)
         {
-            var applicant = await _context.Applicant.FindAsync(id);
-            if (applicant == null)
+            var success = await _applicantService.DeleteApplicantAsync(id);
+            if (!success)
             {
                 return NotFound(new { message = "Applicant not found" });
             }
-
-            _context.Applicant.Remove(applicant);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool ApplicantExists(int id)
-        {
-            return _context.Applicant.Any(e => e.ID == id);
         }
     }
 }

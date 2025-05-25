@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using SystemAPIdotnet.Data;
+using Backend_Recruiting_Apply_App.Services;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,61 +8,57 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class FieldController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IFieldService _fieldService;
 
-        public FieldController(RAADbContext context)
+        public FieldController(IFieldService fieldService)
         {
-            _context = context;
+            _fieldService = fieldService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Field>>> GetField()
         {
-            return await _context.Field.ToListAsync();
+            var fields = await _fieldService.GetAllFieldsAsync();
+            return Ok(fields);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Field>> GetField(int id)
         {
-            var field = await _context.Field.FindAsync(id);
-
+            var field = await _fieldService.GetFieldByIdAsync(id);
             if (field == null)
+            {
                 return NotFound();
-
-            return field;
+            }
+            return Ok(field);
         }
 
         [HttpPost]
         public async Task<ActionResult<Field>> CreateField(Field field)
         {
-            _context.Field.Add(field);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetField), new { id = field.ID }, field);
+            var createdField = await _fieldService.CreateFieldAsync(field);
+            return CreatedAtAction(nameof(GetField), new { id = createdField.ID }, createdField);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateField(int id, Field field)
         {
-            if (id != field.ID)
-                return BadRequest();
-
-            _context.Entry(field).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
+            var success = await _fieldService.UpdateFieldAsync(id, field);
+            if (!success)
+            {
+                return id != field.ID ? BadRequest() : NotFound();
+            }
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteField(int id)
         {
-            var field = await _context.Field.FindAsync(id);
-            if (field == null)
+            var success = await _fieldService.DeleteFieldAsync(id);
+            if (!success)
+            {
                 return NotFound();
-
-            _context.Field.Remove(field);
-            await _context.SaveChangesAsync();
-
+            }
             return NoContent();
         }
     }

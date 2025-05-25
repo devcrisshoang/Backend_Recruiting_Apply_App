@@ -1,9 +1,9 @@
-﻿using Backend_Recruiting_Apply_App.Data.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
 using Backend_Recruiting_Apply_App.Data.Entities;
-using Backend_Recruiting_Apply_App.Data.Mappers;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SystemAPIdotnet.Data;
+using Backend_Recruiting_Apply_App.Data.DTOs;
+using Backend_Recruiting_Apply_App.Services;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -11,52 +11,54 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IUserService _userService;
 
-        public UserController(RAADbContext context)
+        public UserController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
-            return await _context.User.ToListAsync();
+            var users = await _userService.GetAllUsersAsync();
+            return Ok(users);
         }
 
         [HttpGet("non-auth{id}")]
         public async Task<ActionResult<UserDTO>> GetNonAuthUser(int id)
         {
-            var user = await _context.User.FindAsync(id);
-
-            if (user == null)
+            var userDto = await _userService.GetNonAuthUserAsync(id);
+            if (userDto == null)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            return Ok(UserMapper.ToDTO(user));
+            return Ok(userDto);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var user = await _context.User.FindAsync(id);
-
+            var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
+            return Ok(user);
+        }
 
-            return user;
+        [HttpGet("by-applicant/{applicantId}")]
+        public async Task<ActionResult<object>> GetUserByApplicantId(int applicantId)
+        {
+            var userDto = await _userService.GetUserByApplicantIdAsync(applicantId);
+            return Ok(userDto);
         }
 
         [HttpPost]
         public async Task<ActionResult<User>> CreateUser(User user)
         {
-            _context.User.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetUser), new { id = user.ID }, user);
+            var createdUser = await _userService.CreateUserAsync(user);
+            return CreatedAtAction(nameof(GetUser), new { id = createdUser.ID }, createdUser);
         }
 
         [HttpPut("{id}")]
@@ -67,146 +69,78 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return BadRequest(new { message = "ID mismatch" });
             }
 
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
+            var result = await _userService.UpdateUserAsync(id, user);
+            if (!result)
             {
-                await _context.SaveChangesAsync();
+                return NotFound(new { message = "User not found" });
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound(new { message = "User not found" });
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         [HttpPut("{id}/name")]
         public async Task<IActionResult> UpdateUserName(int id, [FromBody] string name)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserNameAsync(id, name);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            user.Name = name;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpPut("{id}/email")]
         public async Task<IActionResult> UpdateUserEmail(int id, [FromBody] string email)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserEmailAsync(id, email);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            user.Email = email;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpPut("{id}/phone")]
         public async Task<IActionResult> UpdateUserPhone(int id, [FromBody] string phone)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserPhoneAsync(id, phone);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            user.Phone = phone;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpPut("{id}/image")]
         public async Task<IActionResult> UpdateUserImage(int id, [FromBody] byte[] image)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserImageAsync(id, image);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            user.Image = image;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpPut("{id}/type")]
         public async Task<IActionResult> UpdateUserType(int id, [FromBody] int type)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserTypeAsync(id, type);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            user.Type = type;
-            await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var result = await _userService.DeleteUserAsync(id);
+            if (!result)
             {
                 return NotFound(new { message = "User not found" });
             }
-
-            _context.User.Remove(user);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        // Controller sửa đổi: Lấy thông tin User dựa trên Applicant_ID, luôn trả về 200 OK
-        [HttpGet("by-applicant/{applicantId}")]
-        public async Task<ActionResult<object>> GetUserByApplicantId(int applicantId)
-        {
-            // Tìm Applicant dựa trên Applicant_ID
-            var applicant = await _context.Applicant
-                .FirstOrDefaultAsync(a => a.ID == applicantId);
-
-            if (applicant == null)
-            {
-                return Ok();
-            }
-
-            // Tìm User dựa trên User_ID từ Applicant
-            var user = await _context.User
-                .FirstOrDefaultAsync(u => u.ID == applicant.User_ID);
-
-            if (user == null)
-            {
-                return Ok();
-            }
-
-            // Chuyển User thành UserDTO để trả về
-            return Ok(UserMapper.ToDTO(user));
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.User.Any(e => e.ID == id);
         }
     }
 }

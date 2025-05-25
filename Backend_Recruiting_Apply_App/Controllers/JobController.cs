@@ -1,7 +1,8 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SystemAPIdotnet.Data;
+﻿using Microsoft.AspNetCore.Mvc;
+using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,103 +10,64 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class JobController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IJobService _jobService;
 
-        public JobController(RAADbContext context)
+        public JobController(IJobService jobService)
         {
-            _context = context;
+            _jobService = jobService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Job>>> GetJob()
         {
-            return await _context.Job.ToListAsync();
+            var jobs = await _jobService.GetAllJobsAsync();
+            return Ok(jobs);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Job>> GetJob(int id)
         {
-            var job = await _context.Job.FindAsync(id);
-
-            if (job == null)
-                return Ok(null); // Trả về 200 OK với null thay vì 404
-
-            return Ok(job);
+            var job = await _jobService.GetJobByIdAsync(id);
+            return Ok(job); // Return 200 OK with null if not found, per original behavior
         }
 
         [HttpGet("recruiter/{recruiterId}")]
         public async Task<ActionResult<IEnumerable<Job>>> GetJobsByRecruiterId(int recruiterId)
         {
-            var jobs = await _context.Job
-                .Where(j => j.Recruiter_ID == recruiterId)
-                .ToListAsync();
-
-            return Ok(jobs ?? new List<Job>()); // Trả về 200 OK với mảng rỗng nếu không tìm thấy
+            var jobs = await _jobService.GetJobsByRecruiterIdAsync(recruiterId);
+            return Ok(jobs ?? new List<Job>()); // Return 200 OK with empty list if not found
         }
 
         [HttpGet("company/{id}")]
         public async Task<ActionResult<IEnumerable<Job>>> GetJobByCompanyId(int id)
         {
-            var jobs = await _context.Recruiter
-                .Where(j => j.Company_ID == id)
-                .Join(
-                _context.Job,
-                recruiter => recruiter.ID,
-                job => job.Recruiter_ID,
-                (recruiter, job) => job
-                ).ToListAsync();
-
-            return Ok(jobs ?? new List<Job>());
+            var jobs = await _jobService.GetJobsByCompanyIdAsync(id);
+            return Ok(jobs ?? new List<Job>()); // Return 200 OK with empty list if not found
         }
 
         [HttpPost]
         public async Task<ActionResult<Job>> CreateJob(Job job)
         {
-            _context.Job.Add(job);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetJob), new { id = job.ID }, job);
+            var createdJob = await _jobService.CreateJobAsync(job);
+            return CreatedAtAction(nameof(GetJob), new { id = createdJob.ID }, createdJob);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateJob(int id, Job job)
         {
-            if (id != job.ID)
-                return BadRequest();
-
-            _context.Entry(job).State = EntityState.Modified;
-
-            try
+            var success = await _jobService.UpdateJobAsync(id, job);
+            if (!success)
             {
-                await _context.SaveChangesAsync();
+                return id != job.ID ? BadRequest() : Ok(); // Return 200 OK if not found, per original behavior
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!JobExists(id))
-                    return Ok(); // Trả về 200 OK thay vì 404
-                else
-                    throw;
-            }
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteJob(int id)
         {
-            var job = await _context.Job.FindAsync(id);
-            if (job == null)
-                return Ok(); // Trả về 200 OK thay vì 404
-
-            _context.Job.Remove(job);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool JobExists(int id)
-        {
-            return _context.Job.Any(e => e.ID == id);
+            var success = await _jobService.DeleteJobAsync(id);
+            return success ? NoContent() : Ok(); // Return 200 OK if not found, per original behavior
         }
     }
 }

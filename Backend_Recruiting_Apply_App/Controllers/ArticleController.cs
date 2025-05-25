@@ -1,7 +1,8 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SystemAPIdotnet.Data;
+﻿using Microsoft.AspNetCore.Mvc;
+using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,91 +10,69 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class ArticleController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IArticleService _articleService;
 
-        public ArticleController(RAADbContext context)
+        public ArticleController(IArticleService articleService)
         {
-            _context = context;
+            _articleService = articleService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Article>>> GetArticle()
         {
-            return await _context.Article.ToListAsync();
+            var articles = await _articleService.GetAllArticlesAsync();
+            return Ok(articles);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Article>> GetArticle(int id)
         {
-            var article = await _context.Article.FindAsync(id);
-
+            var article = await _articleService.GetArticleByIdAsync(id);
             if (article == null)
+            {
                 return NotFound();
-
-            return article;
+            }
+            return Ok(article);
         }
 
         [HttpGet("recruiter/{recruiterId}")]
         public async Task<ActionResult<IEnumerable<Article>>> GetArticlesByRecruiterId(int recruiterId)
         {
-            var articles = await _context.Article
-                .Where(a => a.Recruiter_ID == recruiterId)
-                .ToListAsync();
-
+            var articles = await _articleService.GetArticlesByRecruiterIdAsync(recruiterId);
             if (articles == null || !articles.Any())
+            {
                 return NotFound();
-
-            return articles;
+            }
+            return Ok(articles);
         }
 
         [HttpPost]
         public async Task<ActionResult<Article>> CreateArticle(Article article)
         {
-            _context.Article.Add(article);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetArticle), new { id = article.ID }, article);
+            var createdArticle = await _articleService.CreateArticleAsync(article);
+            return CreatedAtAction(nameof(GetArticle), new { id = createdArticle.ID }, createdArticle);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateArticle(int id, Article article)
         {
-            if (id != article.ID)
+            var success = await _articleService.UpdateArticleAsync(id, article);
+            if (!success)
+            {
                 return BadRequest();
-
-            _context.Entry(article).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ArticleExists(id))
-                    return NotFound();
-                else
-                    throw;
-            }
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteArticle(int id)
         {
-            var article = await _context.Article.FindAsync(id);
-            if (article == null)
+            var success = await _articleService.DeleteArticleAsync(id);
+            if (!success)
+            {
                 return NotFound();
-
-            _context.Article.Remove(article);
-            await _context.SaveChangesAsync();
-
+            }
             return NoContent();
-        }
-
-        private bool ArticleExists(int id)
-        {
-            return _context.Article.Any(e => e.ID == id);
         }
     }
 }

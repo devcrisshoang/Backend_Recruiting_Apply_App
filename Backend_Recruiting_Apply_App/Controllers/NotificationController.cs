@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
 using Backend_Recruiting_Apply_App.Hubs;
-using SystemAPIdotnet.Data;
-using System.Threading.Tasks;
+using Backend_Recruiting_Apply_App.Services;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -13,105 +13,87 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class NotificationController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub> _hubContext;
 
-        public NotificationController(RAADbContext context, IHubContext<NotificationHub> hubContext)
+        public NotificationController(INotificationService notificationService, IHubContext<NotificationHub> hubContext)
         {
-            _context = context;
+            _notificationService = notificationService;
             _hubContext = hubContext;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Notification>>> GetNotification()
         {
-            return await _context.Notification.ToListAsync();
+            var notifications = await _notificationService.GetAllNotificationsAsync();
+            return Ok(notifications);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Notification>> GetNotification(int id)
         {
-            var notification = await _context.Notification.FindAsync(id);
+            var notification = await _notificationService.GetNotificationByIdAsync(id);
             if (notification == null)
             {
                 return NotFound();
             }
-            return notification;
+            return Ok(notification);
         }
 
         [HttpPost]
         public async Task<ActionResult<Notification>> CreateNotification(Notification notification)
         {
-            if (string.IsNullOrEmpty(notification.Content) || notification.User_ID == 0)
+            try
+            {
+                var createdNotification = await _notificationService.CreateNotificationAsync(notification);
+
+                await _hubContext.Clients.Group($"User_{createdNotification.User_ID}")
+                    .SendAsync("ReceiveNotification", createdNotification.User_ID, createdNotification.Name, createdNotification.Content, createdNotification.Time.ToString("o"));
+                Console.WriteLine($"Gửi thông báo tới User_{createdNotification.User_ID}: {createdNotification.Content}");
+
+                return CreatedAtAction(nameof(GetNotification), new { id = createdNotification.ID }, createdNotification);
+            }
+            catch (ArgumentException ex)
             {
                 Console.WriteLine("Dữ liệu thông báo không hợp lệ");
-                return BadRequest("Content và User_ID là bắt buộc.");
+                return BadRequest(ex.Message);
             }
-
-            notification.Time = DateTime.Now;
-            _context.Notification.Add(notification);
-            await _context.SaveChangesAsync();
-
-            // Gửi thông báo qua SignalR
-            await _hubContext.Clients.Group($"User_{notification.User_ID}")
-                .SendAsync("ReceiveNotification", notification.User_ID, notification.Name, notification.Content, notification.Time.ToString("o"));
-            Console.WriteLine($"Gửi thông báo tới User_{notification.User_ID}: {notification.Content}");
-
-            return CreatedAtAction(nameof(GetNotification), new { id = notification.ID }, notification);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateNotification(int id, Notification notification)
         {
-            if (id != notification.ID)
-            {
-                return BadRequest("ID thông báo không khớp.");
-            }
-
-            if (string.IsNullOrEmpty(notification.Content) || notification.User_ID == 0)
-            {
-                return BadRequest("Content và User_ID là bắt buộc.");
-            }
-
-            _context.Entry(notification).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var success = await _notificationService.UpdateNotificationAsync(id, notification);
+                if (!success)
+                {
+                    return id != notification.ID ? BadRequest("ID thông báo không khớp.") : NotFound();
+                }
 
-                // Gửi thông báo cập nhật qua SignalR
                 await _hubContext.Clients.Group($"User_{notification.User_ID}")
                     .SendAsync("ReceiveNotification", notification.User_ID, notification.Name, notification.Content, notification.Time.ToString("o"));
                 Console.WriteLine($"Cập nhật thông báo cho User_{notification.User_ID}: {notification.Content}");
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Notification.Any(e => e.ID == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteNotification(int id)
         {
-            var notification = await _context.Notification.FindAsync(id);
+            var notification = await _notificationService.GetNotificationByIdAsync(id);
             if (notification == null)
             {
                 return NotFound();
             }
 
-            _context.Notification.Remove(notification);
-            await _context.SaveChangesAsync();
+            await _notificationService.DeleteNotificationAsync(id);
 
-            // Gửi thông báo xóa qua SignalR
             await _hubContext.Clients.Group($"User_{notification.User_ID}")
                 .SendAsync("ReceiveNotification", notification.User_ID, notification.Name, "Thông báo đã bị xóa", DateTime.UtcNow.ToString("o"));
             Console.WriteLine($"Xóa thông báo ID {id} cho User_{notification.User_ID}");
@@ -122,11 +104,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<Notification>>> GetNotificationByUserID(int userId)
         {
-            var notifications = await _context.Notification
-                .Where(n => n.User_ID == userId)
-                .OrderByDescending(n => n.Time)
-                .ToListAsync();
-
+            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId);
             return Ok(notifications);
         }
     }

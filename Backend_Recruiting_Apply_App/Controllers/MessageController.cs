@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Backend_Recruiting_Apply_App.Data.Entities;
-using SystemAPIdotnet.Data;
 using Microsoft.AspNetCore.SignalR;
+using Backend_Recruiting_Apply_App.Data.Entities;
 using Backend_Recruiting_Apply_App.Hubs;
+using Backend_Recruiting_Apply_App.Services;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -11,12 +10,12 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class MessageController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IMessageService _messageService;
         private readonly IHubContext<MessageHub> _hubContext;
 
-        public MessageController(RAADbContext context, IHubContext<MessageHub> hubContext)
+        public MessageController(IMessageService messageService, IHubContext<MessageHub> hubContext)
         {
-            _context = context;
+            _messageService = messageService;
             _hubContext = hubContext;
         }
 
@@ -24,84 +23,69 @@ namespace Backend_Recruiting_Apply_App.Controllers
         public async Task<ActionResult<IEnumerable<Message>>> GetMessage()
         {
             Console.WriteLine("Fetching all messages");
-            return await _context.Message.ToListAsync();
+            var messages = await _messageService.GetAllMessagesAsync();
+            return Ok(messages);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Message>> GetMessage(int id)
         {
             Console.WriteLine($"Fetching message with ID: {id}");
-            var message = await _context.Message.FindAsync(id);
+            var message = await _messageService.GetMessageByIdAsync(id);
             if (message == null)
             {
                 Console.WriteLine($"Message not found: {id}");
                 return NotFound();
             }
-            return message;
+            return Ok(message);
         }
 
         [HttpPost]
         public async Task<ActionResult<Message>> SendMessage(Message message)
         {
-            message.Time = DateTime.UtcNow;
             Console.WriteLine($"Saving message: SenderId={message.Sender_ID}, ReceiverId={message.Receiver_ID}, Content={message.Content}");
-            _context.Message.Add(message);
-            await _context.SaveChangesAsync();
+            var createdMessage = await _messageService.SendMessageAsync(message);
 
             var conversationKey = message.Sender_ID < message.Receiver_ID
                 ? $"{message.Sender_ID}_{message.Receiver_ID}"
                 : $"{message.Receiver_ID}_{message.Sender_ID}";
 
-            Console.WriteLine($"Sending ReceiveMessage to group: {conversationKey}, MessageId: {message.ID}, SenderId: {message.Sender_ID}, ReceiverId: {message.Receiver_ID}");
+            Console.WriteLine($"Sending ReceiveMessage to group: {conversationKey}, MessageId: {createdMessage.ID}, SenderId: {createdMessage.Sender_ID}, ReceiverId: {createdMessage.Receiver_ID}");
             await _hubContext.Clients.Group(conversationKey).SendAsync(
                 "ReceiveMessage",
-                message.ID, // Add message.ID
-                message.Sender_ID,
-                message.Receiver_ID,
-                message.Content,
-                message.Time
+                createdMessage.ID,
+                createdMessage.Sender_ID,
+                createdMessage.Receiver_ID,
+                createdMessage.Content,
+                createdMessage.Time
             );
 
-            return CreatedAtAction(nameof(GetMessage), new { id = message.ID }, message);
+            return CreatedAtAction(nameof(GetMessage), new { id = createdMessage.ID }, createdMessage);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMessage(int id, Message message)
         {
-            if (id != message.ID)
+            Console.WriteLine($"Updating message: ID={id}, Content={message.Content}");
+            var success = await _messageService.UpdateMessageAsync(id, message);
+            if (!success)
             {
-                Console.WriteLine($"Invalid message ID: {id} does not match {message.ID}");
-                return BadRequest();
+                Console.WriteLine(id != message.ID ? $"Invalid message ID: {id} does not match {message.ID}" : $"Message not found for update: {id}");
+                return id != message.ID ? BadRequest() : NotFound();
             }
 
-            _context.Entry(message).State = EntityState.Modified;
+            var conversationKey = message.Sender_ID < message.Receiver_ID
+                ? $"{message.Sender_ID}_{message.Receiver_ID}"
+                : $"{message.Receiver_ID}_{message.Sender_ID}";
 
-            try
-            {
-                Console.WriteLine($"Updating message: ID={id}, Content={message.Content}");
-                await _context.SaveChangesAsync();
+            Console.WriteLine($"Sending UpdateMessage to group: {conversationKey}, MessageId: {message.ID}");
+            await _hubContext.Clients.Group(conversationKey).SendAsync(
+                "UpdateMessage",
+                message.ID,
+                message.Content,
+                message.Time
+            );
 
-                var conversationKey = message.Sender_ID < message.Receiver_ID
-                    ? $"{message.Sender_ID}_{message.Receiver_ID}"
-                    : $"{message.Receiver_ID}_{message.Sender_ID}";
-
-                Console.WriteLine($"Sending UpdateMessage to group: {conversationKey}, MessageId: {message.ID}");
-                await _hubContext.Clients.Group(conversationKey).SendAsync(
-                    "UpdateMessage",
-                    message.ID,
-                    message.Content,
-                    message.Time
-                );
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Message.Any(e => e.ID == id))
-                {
-                    Console.WriteLine($"Message not found for update: {id}");
-                    return NotFound();
-                }
-                throw;
-            }
             return NoContent();
         }
 
@@ -109,15 +93,14 @@ namespace Backend_Recruiting_Apply_App.Controllers
         public async Task<IActionResult> DeleteMessage(int id)
         {
             Console.WriteLine($"Deleting message: ID={id}");
-            var message = await _context.Message.FindAsync(id);
+            var message = await _messageService.GetMessageByIdAsync(id);
             if (message == null)
             {
                 Console.WriteLine($"Message not found: {id}");
                 return NotFound();
             }
 
-            _context.Message.Remove(message);
-            await _context.SaveChangesAsync();
+            await _messageService.DeleteMessageAsync(id);
 
             var conversationKey = message.Sender_ID < message.Receiver_ID
                 ? $"{message.Sender_ID}_{message.Receiver_ID}"
@@ -126,7 +109,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             Console.WriteLine($"Sending DeleteMessage to group: {conversationKey}, MessageId: {id}");
             await _hubContext.Clients.Group(conversationKey).SendAsync(
                 "DeleteMessage",
-                message.ID
+                id
             );
 
             return NoContent();
@@ -138,16 +121,14 @@ namespace Backend_Recruiting_Apply_App.Controllers
             try
             {
                 Console.WriteLine("Deleting all messages");
-                var messages = await _context.Message.ToListAsync();
-                if (messages == null || !messages.Any())
+                var success = await _messageService.DeleteAllMessagesAsync();
+                if (!success)
                 {
                     Console.WriteLine("No messages found to delete");
                     return NotFound(new { Message = "No messages found to delete." });
                 }
 
-                _context.Message.RemoveRange(messages);
-                await _context.SaveChangesAsync();
-
+                var messages = await _messageService.GetAllMessagesAsync();
                 foreach (var message in messages)
                 {
                     var conversationKey = message.Sender_ID < message.Receiver_ID
@@ -176,15 +157,7 @@ namespace Backend_Recruiting_Apply_App.Controllers
             try
             {
                 Console.WriteLine($"Fetching messages: SenderId={senderId}, ReceiverId={receiverId}, Skip={skip}, Take={take}");
-                var messages = await _context.Message
-                    .Where(m => (m.Sender_ID == senderId && m.Receiver_ID == receiverId) ||
-                                (m.Sender_ID == receiverId && m.Receiver_ID == senderId))
-                    .OrderByDescending(m => m.Time)
-                    .Skip(skip)
-                    .Take(take)
-                    .OrderBy(m => m.Time)
-                    .ToListAsync();
-
+                var messages = await _messageService.GetMessagesBySenderAndReceiverAsync(senderId, receiverId, skip, take);
                 if (messages == null || !messages.Any())
                 {
                     Console.WriteLine($"No messages found between sender {senderId} and receiver {receiverId}");
@@ -206,33 +179,12 @@ namespace Backend_Recruiting_Apply_App.Controllers
             try
             {
                 Console.WriteLine($"Fetching conversations for user: {userId}");
-                var messages = await _context.Message
-                    .Where(m => m.Sender_ID == userId || m.Receiver_ID == userId)
-                    .OrderBy(m => m.Time)
-                    .ToListAsync();
-
-                if (messages == null || !messages.Any())
+                var conversations = await _messageService.GetConversationsAsync(userId);
+                if (conversations == null || !conversations.Any())
                 {
                     Console.WriteLine($"No conversations found for user: {userId}");
                     return NotFound(new { Message = $"No conversations found for user {userId}." });
                 }
-
-                var conversations = messages
-                    .GroupBy(m => m.Sender_ID < m.Receiver_ID
-                        ? $"{m.Sender_ID}_{m.Receiver_ID}"
-                        : $"{m.Receiver_ID}_{m.Sender_ID}")
-                    .Select(group => {
-                        var lastMessage = group.OrderByDescending(m => m.Time).First();
-                        return new
-                        {
-                            conversationKey = group.Key,
-                            lastMessage = lastMessage.Content,
-                            otherUserId = lastMessage.Sender_ID == userId ? lastMessage.Receiver_ID : lastMessage.Sender_ID,
-                            timestamp = lastMessage.Time
-                        };
-                    })
-                    .OrderByDescending(c => c.timestamp)
-                    .ToList();
 
                 return Ok(conversations);
             }

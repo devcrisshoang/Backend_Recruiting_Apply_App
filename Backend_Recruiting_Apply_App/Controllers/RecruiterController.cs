@@ -1,7 +1,8 @@
-﻿using Backend_Recruiting_Apply_App.Data.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SystemAPIdotnet.Data;
+﻿using Microsoft.AspNetCore.Mvc;
+using Backend_Recruiting_Apply_App.Data.Entities;
+using Backend_Recruiting_Apply_App.Services;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {
@@ -9,41 +10,39 @@ namespace Backend_Recruiting_Apply_App.Controllers
     [ApiController]
     public class RecruiterController : ControllerBase
     {
-        private readonly RAADbContext _context;
+        private readonly IRecruiterService _recruiterService;
 
-        public RecruiterController(RAADbContext context)
+        public RecruiterController(IRecruiterService recruiterService)
         {
-            _context = context;
+            _recruiterService = recruiterService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Recruiter>>> GetRecruiter()
         {
-            var recruiters = await _context.Recruiter.ToListAsync();
-            return Ok(recruiters ?? new List<Recruiter>());
+            var recruiters = await _recruiterService.GetAllRecruitersAsync();
+            return Ok(recruiters);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Recruiter>> GetRecruiter(int id)
         {
-            var recruiter = await _context.Recruiter.FindAsync(id);
-            return Ok(recruiter ?? null);
+            var recruiter = await _recruiterService.GetRecruiterByIdAsync(id);
+            return Ok(recruiter);
         }
 
         [HttpGet("check-recruiter/{userId}")]
         public async Task<IActionResult> CheckRecruiter(int userId)
         {
-            var recruiter = await _context.Recruiter.FirstOrDefaultAsync(r => r.User_ID == userId);
-            return Ok(recruiter ?? null);
+            var recruiter = await _recruiterService.GetRecruiterByUserIdAsync(userId);
+            return Ok(recruiter);
         }
 
         [HttpPost]
         public async Task<ActionResult<Recruiter>> CreateRecruiter(Recruiter recruiter)
         {
-            _context.Recruiter.Add(recruiter);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetRecruiter), new { id = recruiter.ID }, recruiter);
+            var createdRecruiter = await _recruiterService.CreateRecruiterAsync(recruiter);
+            return CreatedAtAction(nameof(GetRecruiter), new { id = createdRecruiter.ID }, createdRecruiter);
         }
 
         [HttpPut("{id}")]
@@ -54,25 +53,10 @@ namespace Backend_Recruiting_Apply_App.Controllers
                 return BadRequest(new { message = "ID mismatch" });
             }
 
-            var existingRecruiter = await _context.Recruiter.FindAsync(id);
-            if (existingRecruiter == null)
+            var result = await _recruiterService.UpdateRecruiterAsync(id, recruiter);
+            if (!result)
             {
-                return Ok(null); // Trả về 200 rỗng thay vì 404
-            }
-
-            _context.Entry(existingRecruiter).CurrentValues.SetValues(recruiter);
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!RecruiterExists(id))
-                {
-                    return Ok(null); // Trả về 200 rỗng thay vì 404
-                }
-                throw;
+                return Ok(null);
             }
 
             return NoContent();
@@ -81,21 +65,13 @@ namespace Backend_Recruiting_Apply_App.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRecruiter(int id)
         {
-            var recruiter = await _context.Recruiter.FindAsync(id);
-            if (recruiter == null)
+            var result = await _recruiterService.DeleteRecruiterAsync(id);
+            if (!result)
             {
-                return Ok(null); // Trả về 200 rỗng thay vì 404
+                return Ok(null);
             }
 
-            _context.Recruiter.Remove(recruiter);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool RecruiterExists(int id)
-        {
-            return _context.Recruiter.Any(e => e.ID == id);
         }
     }
 }
