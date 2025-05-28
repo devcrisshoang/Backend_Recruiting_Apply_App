@@ -139,6 +139,20 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
         }
 
+        [HttpGet("check")]
+        public async Task<ActionResult<bool>> CheckExistingApply(int jobId, int applicantId, int resumeId)
+        {
+            try
+            {
+                var exists = await _applyService.CheckExistingApplyAsync(jobId, applicantId, resumeId);
+                return Ok(exists);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while checking the application.");
+            }
+        }
+
         public class ApplicantWithResumeDto
         {
             public int ApplicantId { get; set; }

@@ -23,6 +23,7 @@ namespace Backend_Recruiting_Apply_App.Services
         Task<List<Applicant>> GetApplicantsByJobIdAsync(int jobId);
         Task<int> GetResumeIdByJobAndApplicantAsync(int jobId, int applicantId);
         Task<int> GetApplyIdByJobResumeApplicantAsync(int jobId, int resumeId, int applicantId);
+        Task<bool> CheckExistingApplyAsync(int jobId, int applicantId, int resumeId);
     }
 
     public class ApplicantWithResumeDto
@@ -199,6 +200,17 @@ namespace Backend_Recruiting_Apply_App.Services
                 .Where(a => a.Job_ID == jobId && a.Resume_ID == resumeId && a.Applicant_ID == applicantId)
                 .Select(a => a.ID)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> CheckExistingApplyAsync(int jobId, int applicantId, int resumeId)
+        {
+            if (jobId <= 0 || applicantId <= 0 || resumeId <= 0)
+            {
+                throw new ArgumentException("JobID, ApplicantID, and ResumeID must be greater than 0.");
+            }
+
+            return await _context.Apply
+                .AnyAsync(a => a.Job_ID == jobId && a.Applicant_ID == applicantId && a.Resume_ID == resumeId);
         }
     }
 }
