@@ -41,6 +41,8 @@ namespace Backend_Recruiting_Apply_App.Services
         {
             return await _dbContext.Follow
                 .Where(j => j.ApplicantID == applicantId)
+                .GroupBy(f => f.CompanyID)
+                .Select(group => group.First())
                 .ToListAsync();
         }
 
