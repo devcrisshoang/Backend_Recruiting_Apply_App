@@ -1,9 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Backend_Recruiting_Apply_App.Data.Entities;
 using SystemAPIdotnet.Data;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Services
 {
@@ -24,6 +21,7 @@ namespace Backend_Recruiting_Apply_App.Services
         Task<int> GetResumeIdByJobAndApplicantAsync(int jobId, int applicantId);
         Task<int> GetApplyIdByJobResumeApplicantAsync(int jobId, int resumeId, int applicantId);
         Task<bool> CheckExistingApplyAsync(int jobId, int applicantId, int resumeId);
+        Task<List<Apply>> GetApplyByJobAndApplicantAsync(int applicantId, int jobId);
     }
 
     public class ApplicantWithResumeDto
@@ -211,6 +209,17 @@ namespace Backend_Recruiting_Apply_App.Services
 
             return await _context.Apply
                 .AnyAsync(a => a.Job_ID == jobId && a.Applicant_ID == applicantId && a.Resume_ID == resumeId);
+        }
+
+        public async Task<List<Apply>> GetApplyByJobAndApplicantAsync(int applicantId, int jobId)
+        {
+            if (applicantId <= 0 || jobId <= 0)
+            {
+                throw new ArgumentException("ApplicantID and JobID must be greater than 0.");
+            }
+            return await _context.Apply
+                .Where(a => a.Applicant_ID == applicantId && a.Job_ID == jobId)
+                .ToListAsync();
         }
     }
 }

@@ -153,6 +153,24 @@ namespace Backend_Recruiting_Apply_App.Controllers
             }
         }
 
+        [HttpGet("{applicantId}/{jobId}")]
+        public async Task<ActionResult<List<Apply>>> GetApply(int applicantId, int jobId)
+        {
+            try
+            {
+                var apply = await _applyService.GetApplyByJobAndApplicantAsync(applicantId, jobId);
+                if (apply == null)
+                {
+                    return NotFound();
+                }
+                return Ok(apply);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         public class ApplicantWithResumeDto
         {
             public int ApplicantId { get; set; }
