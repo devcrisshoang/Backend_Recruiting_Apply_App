@@ -37,7 +37,8 @@ namespace Backend_Recruiting_Apply_App.Services
 
         public async Task<Message> SendMessageAsync(Message message)
         {
-            message.Time = DateTime.UtcNow;
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");                                                                            
+            message.Time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             _dbContext.Message.Add(message);
             await _dbContext.SaveChangesAsync();
             return message;
