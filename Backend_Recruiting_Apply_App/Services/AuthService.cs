@@ -73,9 +73,9 @@ namespace Backend_Recruiting_Apply_App.Services
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             var user = new User
             {
-                Name = request.Name,
-                Email = request.Email,
-                Phone = request.Phone,
+                Name = EncryptString(request.Name),
+                Email = EncryptString(request.Email),
+                Phone = EncryptString(request.Phone),
                 Username = encryptedUsername,
                 Password = hashedPassword,
                 Type = request.Type
@@ -112,7 +112,9 @@ namespace Backend_Recruiting_Apply_App.Services
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
                     new Claim(ClaimTypes.Name, DecryptString(user.Username)),
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Email, DecryptString(user.Email)),
+                    new Claim(ClaimTypes.GivenName, DecryptString(user.Name)),
+                    new Claim(ClaimTypes.MobilePhone, DecryptString(user.Phone)),
                     new Claim("UserType", user.Type.ToString())
                 }),
                 Expires = DateTime.Now.AddDays(3),
