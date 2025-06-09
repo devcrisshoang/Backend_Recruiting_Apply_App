@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Backend_Recruiting_Apply_App.Data.Entities;
 using Backend_Recruiting_Apply_App.Services;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Backend_Recruiting_Apply_App.Controllers
 {

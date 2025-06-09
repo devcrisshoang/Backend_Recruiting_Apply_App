@@ -1,8 +1,6 @@
 ﻿using Backend_Recruiting_Apply_App.Data.Entities;
 using SystemAPIdotnet.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Backend_Recruiting_Apply_App.Services
 {

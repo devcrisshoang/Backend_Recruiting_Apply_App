@@ -138,6 +138,11 @@ namespace Backend_Recruiting_Apply_App.Services
 
         public async Task<User> CreateUserAsync(User user)
         {
+            user.Name = EncryptString(user.Name);
+            user.Email = EncryptString(user.Email);
+            user.Phone = EncryptString(user.Phone);
+            user.Username = EncryptString(user.Username);
+
             _context.User.Add(user);
             await _context.SaveChangesAsync();
             return user;
@@ -147,6 +152,11 @@ namespace Backend_Recruiting_Apply_App.Services
         {
             if (id != user.ID)
                 return false;
+
+            user.Name = EncryptString(user.Name);
+            user.Email = EncryptString(user.Email);
+            user.Phone = EncryptString(user.Phone);
+            user.Username = EncryptString(user.Username);
 
             _context.Entry(user).State = EntityState.Modified;
             try
@@ -168,7 +178,7 @@ namespace Backend_Recruiting_Apply_App.Services
             if (user == null)
                 return false;
 
-            user.Name = name;
+            user.Name = EncryptString(name);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -179,7 +189,7 @@ namespace Backend_Recruiting_Apply_App.Services
             if (user == null)
                 return false;
 
-            user.Email = email;
+            user.Email = EncryptString(email);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -190,7 +200,7 @@ namespace Backend_Recruiting_Apply_App.Services
             if (user == null)
                 return false;
 
-            user.Phone = phone;
+            user.Phone = EncryptString(phone);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -233,27 +243,67 @@ namespace Backend_Recruiting_Apply_App.Services
             return await _context.User.AnyAsync(e => e.ID == id);
         }
 
+        private string EncryptString(string plainText)
+        {
+            if (string.IsNullOrEmpty(plainText))
+                return plainText;
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = _aesKey;
+                aes.IV = _aesIV;
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter sw = new StreamWriter(cs))
+                        {
+                            sw.Write(plainText);
+                        }
+                    }
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
         private string DecryptString(string cipherText)
         {
             if (string.IsNullOrEmpty(cipherText))
                 return cipherText;
 
-            byte[] buffer = Convert.FromBase64String(cipherText);
-            using (Aes aes = Aes.Create())
+            try
             {
-                aes.Key = _aesKey;
-                aes.IV = _aesIV;
-                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-                using (MemoryStream ms = new MemoryStream(buffer))
+                byte[] buffer = Convert.FromBase64String(cipherText);
+                using (Aes aes = Aes.Create())
                 {
-                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    aes.Key = _aesKey;
+                    aes.IV = _aesIV;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                    using (MemoryStream ms = new MemoryStream(buffer))
                     {
-                        using (StreamReader sr = new StreamReader(cs))
+                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
                         {
-                            return sr.ReadToEnd();
+                            using (StreamReader sr = new StreamReader(cs))
+                            {
+                                return sr.ReadToEnd();
+                            }
                         }
                     }
                 }
+            }
+            catch (FormatException)
+            {
+                // Log the invalid Base64 string for debugging
+                Console.WriteLine($"Invalid Base64 string: {cipherText}");
+                // Return the input unchanged, assuming it's plain text
+                return cipherText;
+            }
+            catch (CryptographicException ex)
+            {
+                // Log cryptographic errors (e.g., invalid padding)
+                Console.WriteLine($"Cryptographic error for input: {cipherText}, Error: {ex.Message}");
+                return cipherText;
             }
         }
     }
